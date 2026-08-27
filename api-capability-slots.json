@@ -1,0 +1,51 @@
+{
+  "version": 2,
+  "slots": [
+    {
+      "id": "vision.kimi",
+      "kind": "vision",
+      "provider": "kimi",
+      "label": "Kimi 视觉识图",
+      "summary": "调用 Moonshot/Kimi 的视觉模型识别、描述、OCR 或分析用户提供的图片。",
+      "enabled": true,
+      "api": {
+        "protocol": "openai-chat-completions",
+        "baseURL": "https://api.moonshot.cn/v1",
+        "endpoint": "/chat/completions",
+        "model": "moonshot-v1-32k-vision-preview",
+        "authType": "api_key",
+        "credentialRef": "api-capability:vision.kimi:apiKey",
+        "credentialRequired": true,
+        "configured": true
+      },
+      "triggers": [
+        "识图",
+        "看图",
+        "读图",
+        "图片识别",
+        "图像识别",
+        "图片理解",
+        "图里",
+        "图上",
+        "这张图",
+        "这幅图",
+        "这张照片",
+        "照片里",
+        "截图里",
+        "截图中",
+        "截图上",
+        "截图内容",
+        "ocr",
+        "视觉",
+        "vision",
+        "image recognition",
+        "analyze image",
+        "describe image",
+        "read image"
+      ],
+      "executionInstructions": "收到图片后调用 analyze_image 工具进行分析",
+      "createdAt": "2026-08-01T09:25:41.000Z",
+      "updatedAt": "2026-08-01T09:25:41.000Z"
+    }
+  ]
+}

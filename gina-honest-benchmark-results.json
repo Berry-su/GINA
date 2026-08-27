@@ -1,0 +1,320 @@
+{
+  "timestamp": "2026-08-21T08:16:42.379Z",
+  "levels": {
+    "核心模块健康检查": {
+      "levelId": "L1",
+      "description": "检查所有模块能否正常初始化和响应基础调用。这是\"内部一致性\"检查，衡量的是系统是否稳定，而非智能水平。",
+      "passCount": 6,
+      "failCount": 0,
+      "skipCount": 0,
+      "total": 6,
+      "passRate": 100,
+      "avgScore": 100,
+      "isEstimated": false,
+      "tests": [
+        {
+          "id": "dec-init",
+          "name": "决策系统初始化",
+          "status": "pass",
+          "score": 1,
+          "category": "模块健康",
+          "details": "initDecisionFramework 返回 success: true",
+          "isEstimated": false
+        },
+        {
+          "id": "dec-eval",
+          "name": "决策评估功能",
+          "status": "pass",
+          "score": 1,
+          "category": "模块健康",
+          "details": "决策评估正常工作",
+          "isEstimated": false
+        },
+        {
+          "id": "expl-chain",
+          "name": "决策链记录",
+          "status": "pass",
+          "score": 1,
+          "category": "模块健康",
+          "details": "决策链可正常记录和回放",
+          "isEstimated": false
+        },
+        {
+          "id": "expl-replay",
+          "name": "决策回放",
+          "status": "pass",
+          "score": 1,
+          "category": "模块健康",
+          "details": "决策回放功能正常",
+          "isEstimated": false
+        },
+        {
+          "id": "evo-snapshot",
+          "name": "能力快照",
+          "status": "pass",
+          "score": 1,
+          "category": "模块健康",
+          "details": "追踪 6 个能力域",
+          "isEstimated": false
+        },
+        {
+          "id": "brain-health",
+          "name": "大脑健康状态",
+          "status": "pass",
+          "score": 1,
+          "category": "模块健康",
+          "details": "状态: healthy, 组件数: 6",
+          "isEstimated": false
+        }
+      ]
+    },
+    "工具调用能力": {
+      "levelId": "L2",
+      "description": "测试 Gina 能否正确调用和编排内部工具链，包括决策-记录-学习管道、多工具协同分析等。",
+      "passCount": 3,
+      "failCount": 0,
+      "skipCount": 0,
+      "total": 3,
+      "passRate": 100,
+      "avgScore": 100,
+      "isEstimated": false,
+      "tests": [
+        {
+          "id": "tool-decision-pipeline",
+          "name": "决策-记录-学习 管道",
+          "status": "pass",
+          "score": 1,
+          "category": "工具调用",
+          "details": "完成决策评估+能力更新 (integrated_1787300202438_cvioq7)",
+          "isEstimated": false
+        },
+        {
+          "id": "tool-analysis-pipeline",
+          "name": "多工具协同分析",
+          "status": "pass",
+          "score": 1,
+          "category": "工具调用",
+          "details": "Pareto:✓ 约束:✓ 敏感:✓",
+          "isEstimated": false
+        },
+        {
+          "id": "tool-knowledge-graph",
+          "name": "知识图谱管理",
+          "status": "pass",
+          "score": 1,
+          "category": "工具调用",
+          "details": "节点: 6, 边: 6, 跨域关系: 1",
+          "isEstimated": false
+        }
+      ]
+    },
+    "任务完成能力": {
+      "levelId": "L3",
+      "description": "模拟端到端任务场景，包括复杂约束决策、决策风格自适应、多步骤任务规划等。",
+      "passCount": 2,
+      "failCount": 1,
+      "skipCount": 0,
+      "total": 3,
+      "passRate": 66.66666666666666,
+      "avgScore": 83.33333333333334,
+      "isEstimated": false,
+      "tests": [
+        {
+          "id": "task-complex-decision",
+          "name": "复杂约束决策",
+          "status": "pass",
+          "score": 1,
+          "category": "任务完成",
+          "details": "Pareto最优解: 4, 满足约束方案: 3",
+          "isEstimated": false
+        },
+        {
+          "id": "task-style-adaptation",
+          "name": "决策风格自适应",
+          "status": "fail",
+          "score": 0.5,
+          "category": "任务完成",
+          "details": "3种风格产生 1 种不同选择: balanced_inv, balanced_inv, balanced_inv",
+          "isEstimated": false
+        },
+        {
+          "id": "task-planning",
+          "name": "多步骤任务规划",
+          "status": "pass",
+          "score": 1,
+          "category": "任务完成",
+          "details": "规划 6 步, 风险等级: low",
+          "isEstimated": false
+        }
+      ]
+    },
+    "智能行为能力": {
+      "levelId": "L4",
+      "description": "评估决策模式识别、透明度解释、自我进化规划、跨域知识关联等高级智能行为。",
+      "passCount": 4,
+      "failCount": 0,
+      "skipCount": 0,
+      "total": 4,
+      "passRate": 100,
+      "avgScore": 100,
+      "isEstimated": false,
+      "tests": [
+        {
+          "id": "intel-pattern-recognition",
+          "name": "决策模式识别",
+          "status": "pass",
+          "score": 1,
+          "category": "智能行为",
+          "details": "分析 5 次决策, 识别 7 个模式",
+          "isEstimated": false
+        },
+        {
+          "id": "intel-transparency",
+          "name": "决策透明度",
+          "status": "pass",
+          "score": 1,
+          "category": "智能行为",
+          "details": "透明度得分: 110, 等级: 优秀",
+          "isEstimated": false
+        },
+        {
+          "id": "intel-evolution",
+          "name": "自我进化规划",
+          "status": "pass",
+          "score": 1,
+          "category": "智能行为",
+          "details": "当前阶段: stage_1, 里程碑数: 18",
+          "isEstimated": false
+        },
+        {
+          "id": "intel-knowledge-linking",
+          "name": "跨域知识关联",
+          "status": "pass",
+          "score": 1,
+          "category": "智能行为",
+          "details": "跨域边新增: 0",
+          "isEstimated": false
+        }
+      ]
+    }
+  },
+  "metadata": {
+    "frameworkVersion": "3.0",
+    "testEnvironment": "Node.js v20.20.2",
+    "os": "darwin"
+  },
+  "benchmarkData": {
+    "agentbench_2024": {
+      "source": "AgentBench: Benchmarking Agents for Language-driven Autonomous Navigation",
+      "year": 2024,
+      "metrics": {
+        "GPT-4 (Code)": {
+          "overall": 72.5,
+          "tool_use": 68,
+          "planning": 75,
+          "web": 78,
+          "code": 85
+        },
+        "GPT-4 (base)": {
+          "overall": 67,
+          "tool_use": 62,
+          "planning": 70,
+          "web": 74,
+          "code": 80
+        },
+        "Claude 3 Opus": {
+          "overall": 68.5,
+          "tool_use": 65,
+          "planning": 72,
+          "web": 76,
+          "code": 78
+        },
+        "Gemini Ultra": {
+          "overall": 65.2,
+          "tool_use": 60,
+          "planning": 68,
+          "web": 72,
+          "code": 75
+        },
+        "LLaMA-3-70B": {
+          "overall": 45,
+          "tool_use": 38,
+          "planning": 48,
+          "web": 50,
+          "code": 55
+        }
+      }
+    },
+    "gaia_benchmark": {
+      "source": "GAIA: a benchmark for General AI Assistants",
+      "year": 2023,
+      "metrics": {
+        "GPT-4": {
+          "easy": 67,
+          "medium": 41,
+          "hard": 19
+        },
+        "GPT-4V": {
+          "easy": 68.5,
+          "medium": 43,
+          "hard": 20.5
+        },
+        "Claude 2": {
+          "easy": 58,
+          "medium": 32,
+          "hard": 15
+        },
+        "Gemini Pro": {
+          "easy": 55,
+          "medium": 28,
+          "hard": 13
+        }
+      }
+    },
+    "osworld": {
+      "source": "OSWorld: A Benchmark for Accurate, Reliable, and Scalable Computer Agents",
+      "year": 2024,
+      "metrics": {
+        "GPT-4": {
+          "accuracy": 74,
+          "reliability": 32
+        },
+        "Claude 3 Sonnet": {
+          "accuracy": 54,
+          "reliability": 16
+        },
+        "Gemini Pro": {
+          "accuracy": 43,
+          "reliability": 10
+        },
+        "AutoGen": {
+          "accuracy": 35,
+          "reliability": 8
+        }
+      }
+    }
+  },
+  "dimensionScores": {
+    "L1_moduleHealth": 100,
+    "L2_toolInvocation": 100,
+    "L3_taskCompletion": 83.33333333333334,
+    "L4_intelligentBehavior": 100
+  },
+  "honestAssessment": {
+    "frameworkType": "Agent 能力框架（非完整 LLM Agent）",
+    "coreStrengths": [
+      "决策引擎：支持多目标优化、约束满足、敏感性分析",
+      "可解释性层：完整的决策追踪与透明度报告系统",
+      "进化系统：能力图谱+学习规划+进度反馈",
+      "架构设计：分层模块化，支持 MCP / A2A 协议"
+    ],
+    "keyGaps": [
+      "缺少内置 LLM，无原生对话推理能力",
+      "工具执行依赖外部集成，未做端到端验证",
+      "无真实网络环境测试（网页浏览、API调用等）",
+      "缺少标准基准测试集（HumanEval、MATH 等）",
+      "无大规模多轮对话测试"
+    ],
+    "rankingNote": "无法直接与 GPT-4/Claude 等 LLM Agent 比较，因定位不同"
+  }
+}

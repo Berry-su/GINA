@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gina 全息大脑监测</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: transparent; }
+  #frame {
+    position: fixed; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(68vw, 520px);
+    height: min(72vh, 520px);
+    background:
+      radial-gradient(ellipse at 50% 45%, rgba(28, 58, 100, 0.35) 0%, rgba(8, 18, 38, 0.5) 72%),
+      rgba(6, 14, 32, 0.45);
+    border: 1px solid rgba(120, 170, 230, 0.35);
+    border-radius: 12px;
+    box-shadow: 0 0 50px rgba(80, 140, 220, 0.3), inset 0 0 70px rgba(60, 110, 200, 0.16);
+    overflow: hidden;
+  }
+  #scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #frame::before {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(120,165,225,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(120,165,225,0.06) 1px, transparent 1px);
+    background-size: 34px 34px;
+  }
+  .corner { position: absolute; width: 18px; height: 18px; pointer-events: none; z-index: 3; }
+  .c-tl { top: 7px; left: 7px; border-top: 2px solid rgba(150,190,245,0.7); border-left: 2px solid rgba(150,190,245,0.7); }
+  .c-tr { top: 7px; right: 7px; border-top: 2px solid rgba(150,190,245,0.7); border-right: 2px solid rgba(150,190,245,0.7); }
+  .c-bl { bottom: 7px; left: 7px; border-bottom: 2px solid rgba(150,190,245,0.7); border-left: 2px solid rgba(150,190,245,0.7); }
+  .c-br { bottom: 7px; right: 7px; border-bottom: 2px solid rgba(150,190,245,0.7); border-right: 2px solid rgba(150,190,245,0.7); }
+  .scanline { position: absolute; left: 0; right: 0; height: 64px; z-index: 2; pointer-events: none;
+    background: linear-gradient(to bottom, transparent, rgba(150,200,255,0.06) 40%, rgba(150,200,255,0.16) 50%, rgba(150,200,255,0.06) 60%, transparent);
+    animation: scanMove 12s ease-in-out infinite; }
+  .scanline::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px;
+    background: linear-gradient(to right, transparent, rgba(180,220,255,0.6), transparent); }
+  @keyframes scanMove { 0% { top: 5%; } 50% { top: 88%; } 100% { top: 5%; } }
+
+  .panel { position: absolute; z-index: 3; pointer-events: none; font-family: 'Avenir Next', sans-serif; }
+  .panel .title { font-size: 9px; letter-spacing: 0.18em; color: rgba(130,170,230,0.7); margin-bottom: 4px; }
+  .panel .row { display: flex; justify-content: space-between; gap: 12px; font-size: 10.5px; margin: 2px 0; }
+  .panel .row span { color: rgba(120,160,220,0.6); letter-spacing: 0.04em; }
+  .panel .row b { color: rgba(175,215,255,0.9); font-weight: 500; font-variant-numeric: tabular-nums; }
+
+  #paneeg { left: 14px; right: 14px; bottom: 12px; }
+  #eegCanvas { width: 100%; height: 48px; display: block; opacity: 0.9; }
+  .waves-label { display: flex; gap: 10px; margin-top: 2px; font-size: 9px; color: rgba(140,180,235,0.7); letter-spacing: 0.06em; }
+  .waves-label i { font-style: normal; }
+  .waves-label i.on { color: rgba(190,225,255,0.95); text-shadow: 0 0 6px rgba(150,200,255,0.6); }
+
+  #panneural { right: 14px; top: 14px; text-align: right; }
+  #pancogn { left: 14px; top: 14px; }
+  #pansig { right: 14px; bottom: 92px; text-align: right; }
+
+  .region { position: absolute; z-index: 3; pointer-events: none; font-family: 'Avenir Next', sans-serif; white-space: nowrap; }
+  .region .rname { display: inline; font-size: 9px; letter-spacing: 0.1em; color: rgba(130,170,230,0.75); margin-right: 6px; }
+  .region .rval { display: inline; font-size: 11px; color: rgba(180,220,255,0.9); font-variant-numeric: tabular-nums; }
+  #rFrontal { left: 14px; top: 104px; }
+  #rParietal { left: 14px; top: 126px; }
+  #rOccipital { left: 14px; top: 148px; }
+  #rTemporalL { left: 14px; top: 170px; }
+  #rCerebellum { right: 14px; top: 108px; text-align: right; }
+  #rBrainstem { right: 14px; top: 130px; text-align: right; }
+  #rTemporalR { right: 14px; top: 152px; text-align: right; }
+</style>
+</head>
+<body>
+<div id="frame">
+  <div class="corner c-tl"></div>
+  <div class="corner c-tr"></div>
+  <div class="corner c-bl"></div>
+  <div class="corner c-br"></div>
+  <canvas id="scene"></canvas>
+  <div class="scanline"></div>
+
+  <div class="panel" id="paneeg">
+    <div class="title">实时脑电波 EEG</div>
+    <canvas id="eegCanvas"></canvas>
+    <div class="waves-label" id="wavesLabel"></div>
+  </div>
+
+  <div class="panel" id="panneural">
+    <div class="title">神经网络 NEURAL NET</div>
+    <div class="row"><span>活跃突触节点</span><b id="dSynapse">--</b></div>
+    <div class="row"><span>神经通路激活率</span><b id="dPathway">--</b></div>
+    <div class="row"><span>网络连通度</span><b id="dConnect">--</b></div>
+    <div class="row"><span>信号传输延迟</span><b id="dLatency">--</b></div>
+  </div>
+
+  <div class="panel" id="pancogn">
+    <div class="title">认知状态 COGNITION</div>
+    <div class="row"><span>注意力指数</span><b id="dAttention">--</b></div>
+    <div class="row"><span>记忆活跃度</span><b id="dMemory">--</b></div>
+    <div class="row"><span>运算负载</span><b id="dLoad">--</b></div>
+  </div>
+
+  <div class="panel" id="pansig">
+    <div class="title">信号采集 SIGNAL</div>
+    <div class="row"><span>信噪比 SNR</span><b id="dSnr">--</b></div>
+    <div class="row"><span>信号强度</span><b id="dStrength">--</b></div>
+  </div>
+
+  <div class="region" id="rFrontal"><div class="rname">额叶 FRONTAL</div><div class="rval" id="vFrontal">--</div></div>
+  <div class="region" id="rParietal"><div class="rname">顶叶 PARIETAL</div><div class="rval" id="vParietal">--</div></div>
+  <div class="region" id="rOccipital"><div class="rname">枕叶 OCCIPITAL</div><div class="rval" id="vOccipital">--</div></div>
+  <div class="region" id="rTemporalL"><div class="rname">颞叶 L</div><div class="rval" id="vTemporalL">--</div></div>
+  <div class="region" id="rTemporalR"><div class="rname">颞叶 R</div><div class="rval" id="vTemporalR">--</div></div>
+  <div class="region" id="rCerebellum"><div class="rname">小脑 CEREBELLUM</div><div class="rval" id="vCerebellum">--</div></div>
+  <div class="region" id="rBrainstem"><div class="rname">脑干 BRAINSTEM</div><div class="rval" id="vBrainstem">--</div></div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { Line2 } from 'three/addons/lines/Line2.js';
+import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
+import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
+
+const canvas = document.getElementById('scene');
+const frame = document.getElementById('frame');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(frame.clientWidth, frame.clientHeight);
+renderer.setClearColor(0x000000, 0);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(50, frame.clientWidth / frame.clientHeight, 0.1, 100);
+camera.position.set(0, 0, 4.0);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.6;
+controls.enablePan = false;
+controls.minDistance = 2.5;
+controls.maxDistance = 8;
+
+const PARTICLE = new THREE.Color(0x2e4a66);
+const LINE = new THREE.Color(0x50789e);
+const NODE = new THREE.Color(0x7fa0c0);
+
+const brainGroup = new THREE.Group();
+scene.add(brainGroup);
+
+// 脑区激活值（6 脑区）
+const regions = ['frontal', 'parietal', 'occipital', 'temporal', 'cerebellum', 'brainstem'];
+const activation = [0.6, 0.5, 0.7, 0.55, 0.6, 0.75];
+
+// 圆形软光点 shader（亮度随脑区激活值变化）
+const dotVert = `
+  attribute vec3 color;
+  attribute float aRegion;
+  varying vec3 vColor;
+  uniform float uTime;
+  uniform float uAct[6];
+  void main() {
+    float act = uAct[int(aRegion)];
+    vColor = color * act;
+    vec4 mv = modelViewMatrix * vec4(position, 1.0);
+    float pulse = 0.9 + 0.1 * sin(uTime * 1.5 + position.x * 3.0 + position.y * 2.0);
+    gl_PointSize = (1.3 + pulse * 0.3) * (19.0 / -mv.z);
+    gl_Position = projectionMatrix * mv;
+  }
+`;
+const dotFrag = `
+  varying vec3 vColor;
+  void main() {
+    vec2 c = gl_PointCoord - 0.5;
+    float d = length(c);
+    float a = smoothstep(0.5, 0.0, d);
+    gl_FragColor = vec4(vColor, a * a);
+  }
+`;
+
+function brainRegion(x, y, z) {
+  if (y < -0.55) return 5;            // 脑干
+  if (z < -0.25 && y < 0) return 4;   // 小脑
+  if (z > 0.35) return 0;             // 额叶
+  if (z < -0.45) return 2;            // 枕叶
+  if (y > 0.25) return 1;             // 顶叶
+  return 3;                           // 颞叶
+}
+
+function makeGlowTexture() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const ctx = c.getContext('2d');
+  const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  g.addColorStop(0, 'rgba(210,235,255,0.95)');
+  g.addColorStop(0.3, 'rgba(150,195,245,0.45)');
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 128, 128);
+  return new THREE.CanvasTexture(c);
+}
+
+const coreGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+  map: makeGlowTexture(), color: 0x9cc4f0, blending: THREE.AdditiveBlending,
+  depthWrite: false, transparent: true, opacity: 0.3,
+}));
+coreGlow.scale.set(1.3, 1.3, 1);
+brainGroup.add(coreGlow);
+
+const coreDot = new THREE.Sprite(new THREE.SpriteMaterial({
+  map: makeGlowTexture(), color: 0xe8f2ff, blending: THREE.AdditiveBlending,
+  depthWrite: false, transparent: true, opacity: 0.5,
+}));
+coreDot.scale.set(0.9, 0.9, 1);
+brainGroup.add(coreDot);
+
+// 粒子脉冲（缩小）
+const PULSE_N = 150;
+const pulsePos = new Float32Array(PULSE_N * 3);
+const pulseData = [];
+for (let i = 0; i < PULSE_N; i++) {
+  const th = Math.random() * Math.PI * 2, ph = Math.acos(2 * Math.random() - 1);
+  pulseData.push({
+    dir: new THREE.Vector3(Math.sin(ph) * Math.cos(th), Math.sin(ph) * Math.sin(th), Math.cos(ph)),
+    life: -Math.random() * 2, maxLife: 1.2 + Math.random() * 0.8, speed: 0.4 + Math.random() * 0.5,
+  });
+}
+const pulseGeo = new THREE.BufferGeometry();
+pulseGeo.setAttribute('position', new THREE.BufferAttribute(pulsePos, 3));
+const pulseMat = new THREE.PointsMaterial({
+  color: 0x90c0ff, size: 0.035, transparent: true, opacity: 0,
+  sizeAttenuation: true, depthWrite: false, blending: THREE.AdditiveBlending,
+});
+const pulseMesh = new THREE.Points(pulseGeo, pulseMat);
+brainGroup.add(pulseMesh);
+
+const loader = new STLLoader();
+loader.load('models/brain-whole.stl', (geometry) => {
+  geometry.computeBoundingBox();
+  const bb = geometry.boundingBox;
+  const center = bb.getCenter(new THREE.Vector3());
+  const size = bb.getSize(new THREE.Vector3());
+  geometry.translate(-center.x, -center.y, -center.z);
+  const s = 2.0 / Math.max(size.x, size.y, size.z);
+  geometry.scale(s, s, s);
+  geometry.rotateX(-Math.PI / 2);
+  geometry.rotateY(Math.PI);
+  geometry.computeVertexNormals();
+
+  const posAttr = geometry.attributes.position;
+  const norAttr = geometry.attributes.normal;
+  const total = posAttr.count;
+
+  const PN = 300000;
+  const used = new Set();
+  const pts = [], cols = [], regs = [];
+  let guard = 0;
+  while (pts.length < PN && guard++ < 1500000) {
+    const i = Math.floor(Math.random() * total);
+    if (used.has(i)) continue;
+    used.add(i);
+    const x = posAttr.getX(i) + norAttr.getX(i) * 0.01;
+    const y = posAttr.getY(i) + norAttr.getY(i) * 0.01;
+    const z = posAttr.getZ(i) + norAttr.getZ(i) * 0.01;
+    pts.push(x, y, z);
+    cols.push(PARTICLE.r, PARTICLE.g, PARTICLE.b);
+    regs.push(brainRegion(x, y, z));
+  }
+
+  // 空间网格过滤孤立点
+  const cell = 0.1, grid = new Map();
+  for (let i = 0; i < pts.length; i += 3) {
+    const k = Math.floor(pts[i]/cell)+','+Math.floor(pts[i+1]/cell)+','+Math.floor(pts[i+2]/cell);
+    grid.set(k, (grid.get(k) || 0) + 1);
+  }
+  const fPts = [], fCols = [], fRegs = [];
+  for (let i = 0; i < pts.length; i += 3) {
+    const k = Math.floor(pts[i]/cell)+','+Math.floor(pts[i+1]/cell)+','+Math.floor(pts[i+2]/cell);
+    if ((grid.get(k) || 0) >= 4) {
+      fPts.push(pts[i], pts[i+1], pts[i+2]);
+      fCols.push(cols[i], cols[i+1], cols[i+2]);
+      fRegs.push(regs[i/3]);
+    }
+  }
+  const pointGeo = new THREE.BufferGeometry();
+  pointGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(fPts), 3));
+  pointGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(fCols), 3));
+  pointGeo.setAttribute('aRegion', new THREE.BufferAttribute(new Float32Array(fRegs), 1));
+  const pointMat = new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uAct: { value: activation } },
+    vertexShader: dotVert, fragmentShader: dotFrag,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  });
+  brainGroup.add(new THREE.Points(pointGeo, pointMat));
+  window.__pointMat = pointMat;
+
+  // 细线神经网络
+  const NN = 320, nodeIdx = new Set(), nodePos = [];
+  while (nodePos.length < NN) {
+    const i = Math.floor(Math.random() * total);
+    if (nodeIdx.has(i)) continue;
+    nodeIdx.add(i);
+    nodePos.push(new THREE.Vector3(posAttr.getX(i), posAttr.getY(i), posAttr.getZ(i)));
+  }
+  const linkArr = [];
+  for (let i = 0; i < NN; i++) {
+    const d = [];
+    for (let j = 0; j < NN; j++) { if (i === j) continue; d.push([j, nodePos[i].distanceTo(nodePos[j])]); }
+    d.sort((a, b) => a[1] - b[1]);
+    for (let k = 0; k < 2; k++) { const j = d[k][0]; if (j > i) linkArr.push(nodePos[i].x, nodePos[i].y, nodePos[i].z, nodePos[j].x, nodePos[j].y, nodePos[j].z); }
+  }
+  const linkGeo = new LineSegmentsGeometry();
+  linkGeo.setPositions(linkArr);
+  const linkMat = new LineMaterial({ color: LINE, linewidth: 1.5, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, depthWrite: false });
+  linkMat.resolution.set(frame.clientWidth, frame.clientHeight);
+  brainGroup.add(new Line2(linkGeo, linkMat));
+  window.__linkMat = linkMat;
+
+  // 节点发光粒子
+  const SN = 130, sPts = [], sCols = [], sUsed = new Set();
+  while (sPts.length < SN) {
+    const i = Math.floor(Math.random() * total);
+    if (sUsed.has(i)) continue;
+    sUsed.add(i);
+    sPts.push(posAttr.getX(i), posAttr.getY(i), posAttr.getZ(i));
+    sCols.push(NODE.r, NODE.g, NODE.b);
+  }
+  const nodeGeo = new THREE.BufferGeometry();
+  nodeGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(sPts), 3));
+  nodeGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(sCols), 3));
+  const nodeMat = new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uAct: { value: activation } },
+    vertexShader: dotVert, fragmentShader: dotFrag,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  });
+  // 节点不分区，给个默认 region=0（亮度跟随额叶激活）——简化为固定亮度
+  const nodeRegionAttr = new Float32Array(SN).fill(0);
+  nodeGeo.setAttribute('aRegion', new THREE.BufferAttribute(nodeRegionAttr, 1));
+  const nodes = new THREE.Points(nodeGeo, nodeMat);
+  nodes.scale.setScalar(1.5);
+  brainGroup.add(nodes);
+  window.__nodes = nodes;
+});
+
+// ── 脑电波（5 频段）──
+const eegCanvas = document.getElementById('eegCanvas');
+const eegCtx = eegCanvas.getContext('2d');
+let eegOffset = 0;
+const waves = [
+  { name: 'δ', hz: '0.5-4Hz', f: 1.2, amp: 6, color: 'rgba(110,150,200,0.8)' },
+  { name: 'θ', hz: '4-8Hz', f: 2.5, amp: 5, color: 'rgba(120,160,215,0.8)' },
+  { name: 'α', hz: '8-13Hz', f: 5.0, amp: 5, color: 'rgba(140,180,230,0.85)' },
+  { name: 'β', hz: '13-30Hz', f: 9.0, amp: 4, color: 'rgba(160,200,245,0.9)' },
+  { name: 'γ', hz: '30-100Hz', f: 16.0, amp: 3, color: 'rgba(180,220,255,0.95)' },
+];
+const wavesLabel = document.getElementById('wavesLabel');
+waves.forEach(w => {
+  const i = document.createElement('i');
+  i.textContent = `${w.name} ${w.hz}`;
+  i.dataset.name = w.name;
+  wavesLabel.appendChild(i);
+});
+function drawEEG(think) {
+  const w = eegCanvas.width = eegCanvas.clientWidth;
+  const h = eegCanvas.height = eegCanvas.clientHeight;
+  eegCtx.clearRect(0, 0, w, h);
+  waves.forEach((wave, wi) => {
+    eegCtx.beginPath();
+    const ampScale = (wave.name === 'β' || wave.name === 'γ') ? (1 + think * 0.8) : 1;
+    for (let x = 0; x < w; x++) {
+      const t = (x + eegOffset) / w * 30;
+      const y = h / 2
+        + Math.sin(t * wave.f * 0.35) * wave.amp * ampScale
+        + Math.sin(t * wave.f * 0.9) * wave.amp * 0.4
+        + (Math.random() - 0.5) * 1.5;
+      if (x === 0) eegCtx.moveTo(x, y);
+      else eegCtx.lineTo(x, y);
+    }
+    eegCtx.strokeStyle = wave.color;
+    eegCtx.lineWidth = wave.name === 'γ' ? 1.1 : 1.3;
+    eegCtx.stroke();
+  });
+  eegOffset += 1.2;
+}
+
+// ── 动画 + 数据 ──
+const clock = new THREE.Clock();
+let think = 0;
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const t = clock.elapsedTime;
+  controls.update();
+
+  // 模拟 gina 思考状态（周期性：思考时 think 升高）
+  think = Math.max(0, Math.sin(t * 0.35) * 0.5 + 0.5);
+  think = think * (0.6 + 0.4 * Math.pow(Math.sin(t * 1.8), 2));
+
+  // 脑区激活值动态变化（思考时整体升高）
+  activation[0] = 0.5 + think * 0.5 + Math.sin(t * 0.9) * 0.08;      // 额叶（思考主区）
+  activation[1] = 0.45 + think * 0.3 + Math.sin(t * 1.3) * 0.06;     // 顶叶
+  activation[2] = 0.55 + think * 0.25 + Math.sin(t * 0.7) * 0.07;    // 枕叶
+  activation[3] = 0.5 + think * 0.35 + Math.sin(t * 1.1) * 0.06;     // 颞叶
+  activation[4] = 0.5 + think * 0.3 + Math.sin(t * 0.6) * 0.05;      // 小脑
+  activation[5] = 0.65 + Math.sin(t * 1.5) * 0.1;                    // 脑干
+  activation.forEach((v, i) => activation[i] = Math.max(0.25, Math.min(1, v)));
+
+  if (window.__pointMat) window.__pointMat.uniforms.uAct.value = activation;
+  if (window.__pointMat) window.__pointMat.uniforms.uTime.value = t;
+  if (window.__nodes) window.__nodes.material.uniforms.uTime.value = t;
+
+  if (coreGlow) {
+    const breathe = 1 + Math.sin(t * 1.5) * 0.15;
+    coreGlow.scale.set(1.3 * breathe, 1.3 * breathe, 1);
+    coreGlow.material.opacity = 0.2 + Math.sin(t * 1.5) * 0.04 + think * 0.15;
+  }
+  coreDot.material.opacity = 0.35 + think * 0.4;
+
+  // 粒子脉冲（自然慢速扩散）
+  for (let i = 0; i < PULSE_N; i++) {
+    const d = pulseData[i];
+    d.life += dt * (0.25 + think * 0.35);
+    if (d.life > d.maxLife) d.life = 0;
+    const r = d.life * d.speed;
+    pulsePos[i*3] = d.dir.x * r; pulsePos[i*3+1] = d.dir.y * r; pulsePos[i*3+2] = d.dir.z * r;
+  }
+  pulseGeo.attributes.position.needsUpdate = true;
+  pulseMat.opacity = 0.25 + think * 0.35;
+
+  drawEEG(think);
+  updateData(think, t);
+  renderer.render(scene, camera);
+}
+animate();
+
+// ── 数据更新 ──
+function updateData(think, t) {
+  document.getElementById('dSynapse').textContent = Math.floor(280000 + think * 120000 + Math.random() * 8000).toLocaleString();
+  document.getElementById('dPathway').textContent = (78 + think * 20 + Math.random() * 3).toFixed(1) + '%';
+  document.getElementById('dConnect').textContent = (0.82 + think * 0.14 + Math.random() * 0.03).toFixed(2);
+  document.getElementById('dLatency').textContent = (28 - think * 8 + Math.random() * 3).toFixed(1) + 'ms';
+
+  document.getElementById('dAttention').textContent = Math.floor(60 + think * 35 + Math.random() * 5);
+  document.getElementById('dMemory').textContent = Math.floor(55 + think * 30 + Math.random() * 8) + '%';
+  document.getElementById('dLoad').textContent = Math.floor(35 + think * 50 + Math.random() * 10) + '%';
+
+  document.getElementById('dSnr').textContent = (32 + Math.random() * 4).toFixed(1) + 'dB';
+  document.getElementById('dStrength').textContent = Math.floor(85 + Math.random() * 14) + '%';
+
+  document.getElementById('vFrontal').textContent = (activation[0] * 100).toFixed(0) + '%';
+  document.getElementById('vParietal').textContent = (activation[1] * 100).toFixed(0) + '%';
+  document.getElementById('vOccipital').textContent = (activation[2] * 100).toFixed(0) + '%';
+  document.getElementById('vTemporalL').textContent = (activation[3] * 100).toFixed(0) + '%';
+  document.getElementById('vTemporalR').textContent = ((activation[3] + 0.05) * 100).toFixed(0) + '%';
+  document.getElementById('vCerebellum').textContent = (activation[4] * 100).toFixed(0) + '%';
+  document.getElementById('vBrainstem').textContent = (activation[5] * 100).toFixed(0) + '%';
+
+  // 脑电波标签高亮（思考时 β/γ 高亮）
+  const labels = wavesLabel.querySelectorAll('i');
+  labels.forEach(el => {
+    const n = el.dataset.name;
+    el.className = (think > 0.5 && (n === 'β' || n === 'γ')) ? 'on' : '';
+  });
+}
+
+window.addEventListener('resize', () => {
+  camera.aspect = frame.clientWidth / frame.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(frame.clientWidth, frame.clientHeight);
+  if (window.__linkMat) window.__linkMat.resolution.set(frame.clientWidth, frame.clientHeight);
+});
+</script>
+</body>
+</html>

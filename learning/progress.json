@@ -1,0 +1,107 @@
+{
+  "directions": [
+    {
+      "line": "主攻线",
+      "id": "ai",
+      "items": [
+        {
+          "name": "Agent记忆机制综述 (arXiv:2404.13501)",
+          "done": true
+        },
+        {
+          "name": "CoALA 记忆类型学 (arXiv:2309.02427)",
+          "done": true
+        },
+        {
+          "name": "MemGPT/Letta 分层记忆",
+          "done": true
+        },
+        {
+          "name": "mem0 提取式记忆",
+          "done": false
+        },
+        {
+          "name": "GraphRAG 图记忆",
+          "done": false
+        },
+        {
+          "name": "混合检索与重排 (RAG 进阶)",
+          "done": false
+        },
+        {
+          "name": "工具使用与 Function Calling",
+          "done": false
+        },
+        {
+          "name": "多智能体协作",
+          "done": false
+        },
+        {
+          "name": "LLM 推理与规划",
+          "done": false
+        }
+      ]
+    },
+    {
+      "line": "钱线",
+      "id": "finance",
+      "items": [
+        {
+          "name": "金融投资基础：资产类别与风险",
+          "done": false
+        },
+        {
+          "name": "国内地产：政策与周期",
+          "done": false
+        },
+        {
+          "name": "海外地产：市场与税务",
+          "done": false
+        },
+        {
+          "name": "CRS 信息交换机制",
+          "done": false
+        },
+        {
+          "name": "税务合规与合法筹划",
+          "done": false
+        }
+      ]
+    },
+    {
+      "line": "经营线",
+      "id": "business",
+      "items": [
+        {
+          "name": "公司法：公司形态与治理",
+          "done": false
+        },
+        {
+          "name": "工商管理：经营与决策",
+          "done": false
+        }
+      ]
+    },
+    {
+      "line": "底线线",
+      "id": "law",
+      "items": [
+        {
+          "name": "刑法总则：罪与非罪边界",
+          "done": false
+        }
+      ]
+    },
+    {
+      "line": "人情线",
+      "id": "emotion",
+      "items": [
+        {
+          "name": "人类情感：亲密关系与沟通",
+          "done": false
+        }
+      ]
+    }
+  ],
+  "updatedAt": "2026-08-23T03:08:52.521Z"
+}

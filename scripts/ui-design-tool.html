@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GINA UI DESIGN TOOL</title>
+<style>
+  :root {
+    --bg: #050506;
+    --surface: #0a0a0b;
+    --surface-alt: #0f0f10;
+    --line: #2a2a2c;
+    --line-bright: #3a3a3c;
+    --text: #e6e6e6;
+    --text-dim: #8a8a8e;
+    --text-faint: #555558;
+    --up: #e5484d;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+    min-height: 100vh; display: flex; flex-direction: column;
+  }
+  header {
+    border-bottom: 1px solid var(--line); padding: 14px 20px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  header .logo { font-family: ui-monospace, monospace; font-size: 13px; letter-spacing: 0.08em; }
+  header .dot { color: var(--up); }
+  header .sub { color: var(--text-dim); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+  main { display: grid; grid-template-columns: 360px 1fr; gap: 1px; flex: 1; background: var(--line); }
+  .panel { background: var(--bg); padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+  .panel h2 {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-dim); padding-bottom: 8px; border-bottom: 1px solid var(--line);
+  }
+  label { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); display: block; margin-bottom: 6px; }
+  textarea, input[type="text"], select {
+    width: 100%; background: var(--surface); border: 1px solid var(--line);
+    color: var(--text); padding: 10px; font-size: 13px; outline: none; resize: vertical;
+    font-family: inherit;
+  }
+  select { cursor: pointer; }
+  textarea:focus, input:focus, select:focus { border-color: var(--line-bright); }
+  .btn {
+    background: var(--line-bright); color: var(--bg); border: 1px solid var(--line-bright);
+    padding: 10px 14px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+    cursor: pointer; font-weight: 600;
+  }
+  .btn:hover { background: var(--text); color: var(--bg); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .hint { font-size: 11px; color: var(--text-faint); line-height: 1.6; }
+  .error { font-size: 12px; color: var(--up); white-space: pre-wrap; }
+  .result { flex: 1; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+  .tabs { display: flex; gap: 1px; border-bottom: 1px solid var(--line); }
+  .tab {
+    padding: 8px 14px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    cursor: pointer; color: var(--text-dim); border: 1px solid var(--line); border-bottom: none; background: var(--surface);
+  }
+  .tab.active { color: var(--text); background: var(--surface-alt); }
+  .view { flex: 1; border: 1px solid var(--line); background: var(--surface); min-height: 0; display: flex; }
+  iframe { flex: 1; border: 0; background: #fff; }
+  pre { flex: 1; margin: 0; padding: 14px; overflow: auto; font-family: ui-monospace, monospace; font-size: 12px; color: var(--text); }
+  .actions { display: flex; gap: 10px; align-items: center; }
+  .empty { color: var(--text-faint); font-size: 12px; margin: auto; }
+</style>
+</head>
+<body>
+  <header>
+    <span class="logo"><span class="dot">●</span> GINA UI DESIGN TOOL</span>
+    <span class="sub">Monochrome Precision HUD · 独立运行，无需启动 Gina</span>
+  </header>
+
+  <main>
+    <!-- 左：输入 -->
+    <section class="panel">
+      <h2>设计输入</h2>
+      <div>
+        <label>界面需求</label>
+        <textarea id="req" rows="6" placeholder="例：做一个股票交易看盘页面，顶部标题栏、左侧自选股列表、右侧行情图、底部状态栏"></textarea>
+      </div>
+      <div>
+        <label>组件名（可选）</label>
+        <input type="text" id="name" placeholder="TradingView（留空自动命名）">
+      </div>
+      <div>
+        <label>风格</label>
+        <select id="token">
+          <option value="monochrome-hud">单色精密仪器</option>
+          <option value="hologram-blue" selected>蓝色全息 · 钢铁侠贾维斯</option>
+        </select>
+      </div>
+      <button class="btn" id="go">生成界面</button>
+      <div class="error" id="err"></div>
+      <div class="hint">
+        生成走 DeepSeek（llm/deepseek.json），审美由 Monochrome HUD token + 禁止清单锁定（无渐变/发光/玻璃拟态）。
+        产物：预览 + React 组件 + CSS Modules。
+      </div>
+    </section>
+
+    <!-- 右：预览 + 代码 -->
+    <section class="panel">
+      <div class="result">
+        <div class="tabs" id="tabs">
+          <div class="tab active" data-t="preview">预览</div>
+          <div class="tab" data-t="tsx">TSX</div>
+          <div class="tab" data-t="css">CSS</div>
+        </div>
+        <div class="view" id="view">
+          <div class="empty">填写需求后点「生成界面」</div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="dl-preview" disabled>下载预览</button>
+          <button class="btn" id="dl-code" disabled>下载代码</button>
+          <span class="hint" id="status"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+<script>
+const $ = (id) => document.getElementById(id)
+let state = { html: '', tsx: '', css: '', name: 'GeneratedPage' }
+
+function download(filename, content) {
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url; a.download = filename; a.click()
+  URL.revokeObjectURL(url)
+}
+
+function showView(kind) {
+  const view = $('view')
+  if (kind === 'preview') {
+    const ifr = document.createElement('iframe')
+    ifr.srcdoc = state.html || '<html><body style="background:#050506;color:#888;font-family:sans-serif">暂无预览</body></html>'
+    view.innerHTML = ''
+    view.appendChild(ifr)
+  } else if (kind === 'tsx') {
+    view.innerHTML = `<pre>${escapeHtml(state.tsx || '')}</pre>`
+  } else if (kind === 'css') {
+    view.innerHTML = `<pre>${escapeHtml(state.css || '')}</pre>`
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+$('tabs').addEventListener('click', (e) => {
+  const tab = e.target.closest('.tab')
+  if (!tab) return
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'))
+  tab.classList.add('active')
+  showView(tab.dataset.t)
+})
+
+$('go').addEventListener('click', async () => {
+  const req = $('req').value.trim()
+  if (!req) { $('err').textContent = '请填写界面需求'; return }
+  $('err').textContent = ''
+  $('go').disabled = true
+  $('status').textContent = '生成中…'
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requirement: req, name: $('name').value.trim(), token: $('token').value })
+    })
+    const data = await res.json()
+    if (!data.ok) { $('err').textContent = (data.errors || ['生成失败']).join('\n'); return }
+    state = {
+      html: data.html,
+      tsx: data.files[`${data.componentName}.tsx`] || '',
+      css: data.files[`${data.componentName}.module.css`] || '',
+      name: data.componentName,
+    }
+    $('status').textContent = `完成：${data.componentName}`
+    $('dl-preview').disabled = false
+    $('dl-code').disabled = false
+    showView('preview')
+  } catch (e) {
+    $('err').textContent = '请求失败：' + (e.message || e)
+  } finally {
+    $('go').disabled = false
+  }
+})
+
+$('dl-preview').addEventListener('click', () => download(`${state.name}.html`, state.html))
+$('dl-code').addEventListener('click', () => {
+  download(`${state.name}.tsx`, state.tsx)
+  download(`${state.name}.module.css`, state.css)
+})
+</script>
+</body>
+</html>

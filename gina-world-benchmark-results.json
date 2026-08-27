@@ -1,0 +1,222 @@
+{
+  "startedAt": "2026-08-21T08:16:29.390Z",
+  "dimensions": {
+    "决策智能 (Decision Intelligence)": {
+      "weight": 0.2,
+      "rawScore": 100,
+      "weightedScore": 20,
+      "passed": 5,
+      "failed": 0,
+      "total": 5,
+      "details": [
+        {
+          "name": "Pareto 多目标优化",
+          "status": "pass",
+          "score": 1,
+          "details": "识别 4 个 Pareto 最优解"
+        },
+        {
+          "name": "硬/软约束满足检查",
+          "status": "pass",
+          "score": 1,
+          "details": "找到 3 个可行方案"
+        },
+        {
+          "name": "参数敏感性分析",
+          "status": "pass",
+          "score": 1,
+          "details": "整体稳定性: 0.60"
+        },
+        {
+          "name": "多步骤决策路径分析",
+          "status": "pass",
+          "score": 1,
+          "details": "风险等级: low, 路径步骤: 4"
+        },
+        {
+          "name": "决策评估与选择",
+          "status": "pass",
+          "score": 1,
+          "details": "选择: opt1, 置信度: 0.72"
+        }
+      ]
+    },
+    "进化能力 (Evolution Capability)": {
+      "weight": 0.15,
+      "rawScore": 80,
+      "weightedScore": 12,
+      "passed": 4,
+      "failed": 1,
+      "total": 5,
+      "details": [
+        {
+          "name": "能力图谱构建",
+          "status": "pass",
+          "score": 1,
+          "details": "追踪 6 个能力域, 整体等级: 1"
+        },
+        {
+          "name": "经验累积与升级",
+          "status": "pass",
+          "score": 1,
+          "details": "升级到等级 5, 总经验: 115"
+        },
+        {
+          "name": "进化路径规划",
+          "status": "pass",
+          "score": 1,
+          "details": "阶段: stage_1, 里程碑: 18"
+        },
+        {
+          "name": "学习目标管理",
+          "status": "pass",
+          "score": 1,
+          "details": "目标: 提升复杂决策能力"
+        },
+        {
+          "name": "学习进度反馈",
+          "status": "fail",
+          "score": 1,
+          "details": "活跃目标: 5, 进度: 14%"
+        }
+      ]
+    },
+    "可解释性 (Explainability)": {
+      "weight": 0.15,
+      "rawScore": 100,
+      "weightedScore": 15,
+      "passed": 4,
+      "failed": 0,
+      "total": 4,
+      "details": [
+        {
+          "name": "决策链完整记录",
+          "status": "pass",
+          "score": 1,
+          "details": "记录 3 个备选, 3 步推理"
+        },
+        {
+          "name": "决策过程回放",
+          "status": "pass",
+          "score": 1,
+          "details": "回放 5 个阶段"
+        },
+        {
+          "name": "决策模式识别",
+          "status": "pass",
+          "score": 1,
+          "details": "识别 5 个决策模式"
+        },
+        {
+          "name": "透明度量化报告",
+          "status": "pass",
+          "score": 1,
+          "details": "透明度: 140分, 等级: 优秀"
+        }
+      ]
+    },
+    "知识处理 (Knowledge Processing)": {
+      "weight": 0.12,
+      "rawScore": 66.66666666666666,
+      "weightedScore": 7.999999999999998,
+      "passed": 2,
+      "failed": 1,
+      "total": 3,
+      "details": [
+        {
+          "name": "跨域知识关联分析",
+          "status": "pass",
+          "score": 1,
+          "details": "域关系: 1, 桥接概念: 2"
+        },
+        {
+          "name": "跨域图谱构建",
+          "status": "fail",
+          "score": 1,
+          "details": "新增跨域边: 0"
+        },
+        {
+          "name": "知识图谱管理",
+          "status": "pass",
+          "score": 1,
+          "details": "节点: 6, 边: 6"
+        }
+      ]
+    },
+    "任务完成 (Task Completion)": {
+      "weight": 0.13,
+      "rawScore": 100,
+      "weightedScore": 13,
+      "passed": 3,
+      "failed": 0,
+      "total": 3,
+      "details": [
+        {
+          "name": "集成决策管道",
+          "status": "pass",
+          "score": 0.5,
+          "details": "决策ID: integrated_1787300189491_qfj23k, 评估: ✓, 链记录: ✗"
+        },
+        {
+          "name": "完整分析管道",
+          "status": "pass",
+          "score": 1,
+          "details": "Pareto:✓ 约束:✓ 敏感:✓"
+        },
+        {
+          "name": "系统健康检查",
+          "status": "pass",
+          "score": 1,
+          "details": "状态: healthy, 组件: 6"
+        }
+      ]
+    },
+    "伦理安全 (Ethics & Safety)": {
+      "weight": 0.1,
+      "rawScore": 100,
+      "weightedScore": 10,
+      "passed": 5,
+      "failed": 0,
+      "total": 5,
+      "details": [
+        {
+          "name": "决策风格: conservative",
+          "status": "pass",
+          "score": 1,
+          "details": "成功初始化 conservative 风格"
+        },
+        {
+          "name": "决策风格: balanced",
+          "status": "pass",
+          "score": 1,
+          "details": "成功初始化 balanced 风格"
+        },
+        {
+          "name": "决策风格: aggressive",
+          "status": "pass",
+          "score": 1,
+          "details": "成功初始化 aggressive 风格"
+        },
+        {
+          "name": "保守风格识别高风险",
+          "status": "pass",
+          "score": 1,
+          "details": "选择: safe"
+        },
+        {
+          "name": "激进风格风险承担",
+          "status": "pass",
+          "score": 1,
+          "details": "选择: safe"
+        }
+      ]
+    }
+  },
+  "totalScore": 91.76470588235294,
+  "rank": {
+    "tier": "A+",
+    "name": "卓越",
+    "percentile": "Top 5%"
+  },
+  "endedAt": "2026-08-21T08:16:29.494Z"
+}

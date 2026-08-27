@@ -1,0 +1,26 @@
+{
+  "clawbot": {},
+  "tts": {
+    "ttsProvider": "doubao",
+    "ttsVoiceId": "zh_female_xiaohe_uranus_bigtts",
+    "doubaoKey": "dec47795-c5fe-46f7-ab73-ef9fde56a0c0",
+    "doubaoResourceId": "seed-tts-2.0",
+    "doubaoSpeechRate": "0",
+    "volcanoAppId": "dec47795-c5fe-46f7-ab73-ef9fde56a0c0"
+  },
+  "embedding": {},
+  "schemaVersion": 4,
+  "contextWindow": {
+    "chatMessageLimit": 20,
+    "toolCallLimit": 5
+  },
+  "provider": "deepseek",
+  "thinking": true,
+  "security": {
+    "fileSandbox": false,
+    "execSandbox": false,
+    "browserPrivateNetwork": false,
+    "blockedTools": [],
+    "updatedAt": "2026-07-30T17:54:50+08:00"
+  }
+}

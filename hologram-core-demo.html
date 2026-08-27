@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gina 全息能量核心 · 方向5 经典全息投影</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; background: #010304; overflow: hidden; }
+  #scene { position: fixed; inset: 0; display: block; }
+  #clock {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 12px;
+    font: 20px/1 'Orbitron', 'Avenir Next', sans-serif;
+    font-weight: 300; letter-spacing: 0.2em; color: #ffffff;
+    text-shadow: 0 0 8px rgba(255,255,255,0.9), 0 0 18px rgba(170,225,255,0.55), 0 0 34px rgba(130,205,255,0.35);
+    pointer-events: none;
+  }
+  #clock::before, #clock::after {
+    content: ''; width: 34px; height: 1px;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.85), transparent);
+  }
+
+  /* ── HUD：四角数据读数（半透明色块）+ 底部对话框 ── */
+  :root {
+    --ln: rgba(168,240,255,0.24);
+    --ln-hi: rgba(168,240,255,0.62);
+    --tx: #d8f6ff;
+    --dim: rgba(168,240,255,0.55);
+    --cyan: #3fd6c8;
+    --chip: rgba(10,22,30,0.5);
+    --chip-hover: rgba(168,240,255,0.08);
+  }
+
+  /* 四角数据面板：柔和半透明色块，无硬边框 */
+  .hud {
+    position: fixed;
+    background: var(--chip);
+    backdrop-filter: blur(4px);
+    border-radius: 3px;
+    font-family: 'Orbitron', 'PingFang SC', sans-serif;
+    z-index: 2;
+  }
+  .hud-title {
+    padding: 10px 14px 6px;
+    font-size: 9px; letter-spacing: 0.26em; color: var(--dim);
+    white-space: nowrap;
+  }
+  .hud-body { padding: 4px 14px 12px; }
+  .hud-row { display: flex; justify-content: space-between; gap: 14px; font-size: 11px; margin: 4px 0; }
+  .hud-row span { color: var(--dim); letter-spacing: 0.12em; }
+  .hud-row b { color: var(--tx); font-weight: 400; letter-spacing: 0.06em; }
+  .hud-row b.ok { color: var(--cyan); }
+  #hudTL { left: 24px; top: 24px; }
+  #hudTR { right: 24px; top: 24px; }
+  #hudBL { left: 24px; bottom: 24px; }
+  #hudBR { right: 24px; bottom: 24px; }
+
+  /* 能量条 */
+  .hud-bars { display: flex; gap: 3px; margin: 6px 0 8px; }
+  .hud-bars i { width: 6px; height: 12px; background: rgba(168,240,255,0.12); }
+  .hud-bars i.on { background: var(--cyan); box-shadow: 0 0 6px rgba(63,214,200,0.6); }
+
+  /* 底部对话框：柔和半透明色块 */
+  #chatBar {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+    width: 560px; z-index: 2; font-family: 'Orbitron', 'PingFang SC', sans-serif;
+  }
+  #reply {
+    margin: 0 auto 10px; padding: 9px 14px;
+    background: var(--chip); backdrop-filter: blur(4px); border-radius: 3px;
+    font-size: 12.5px; line-height: 1.6; color: var(--tx);
+    font-family: 'Avenir Next', 'PingFang SC', sans-serif;
+    opacity: 0; transition: opacity .25s;
+  }
+  #reply.show { opacity: 1; }
+  .composer {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--chip); backdrop-filter: blur(4px); border-radius: 3px;
+    padding: 8px 10px;
+  }
+  #chatInput {
+    flex: 1; background: transparent; border: none; outline: none;
+    color: var(--tx); font: 14px/1.4 'Avenir Next', 'PingFang SC', sans-serif;
+    letter-spacing: 0.02em;
+  }
+  #chatInput::placeholder { color: rgba(168,240,255,0.35); }
+  .icon-btn {
+    flex: none; width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--chip-hover); border: none; border-radius: 3px;
+    color: var(--dim); cursor: pointer;
+    transition: color .15s, background .15s;
+  }
+  .icon-btn:hover { color: var(--tx); background: rgba(168,240,255,0.14); }
+  .icon-btn.rec { color: #ff6b7a; animation: recPulse 1.1s infinite; }
+  @keyframes recPulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+  .send-btn {
+    flex: none; height: 34px; padding: 0 14px;
+    background: var(--chip-hover); border: none; border-radius: 3px;
+    color: var(--tx); font: 11px 'Orbitron', sans-serif; letter-spacing: 0.2em;
+    cursor: pointer; transition: background .15s;
+  }
+  .send-btn:hover { background: rgba(63,214,200,0.18); }
+
+  @media (max-width: 860px) {
+    .hud { display: none; }
+    #chatBar { width: 92%; }
+  }
+</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<div id="clock">00:00:00</div>
+
+<!-- 四角数据面板 -->
+<div class="hud" id="hudTL">
+  <div class="hud-title">CORE // STATUS</div>
+  <div class="hud-body">
+    <div class="hud-row"><span>SYNC</span><b>98.4%</b></div>
+    <div class="hud-row"><span>TEMP</span><b>36.5°</b></div>
+    <div class="hud-row"><span>MODE</span><b class="ok">ACTIVE</b></div>
+  </div>
+</div>
+<div class="hud" id="hudTR">
+  <div class="hud-title">ORBIT // TRACKING</div>
+  <div class="hud-body">
+    <div class="hud-row"><span>SAT-01</span><b class="ok">LOCK</b></div>
+    <div class="hud-row"><span>SAT-02</span><b class="ok">LOCK</b></div>
+    <div class="hud-row"><span>SAT-03</span><b class="ok">LOCK</b></div>
+  </div>
+</div>
+<div class="hud" id="hudBL">
+  <div class="hud-title">PARTICLE // FIELD</div>
+  <div class="hud-body">
+    <div class="hud-row"><span>COUNT</span><b>3.4K</b></div>
+    <div class="hud-row"><span>FLUX</span><b>0.87</b></div>
+    <div class="hud-row"><span>DENSITY</span><b>HIGH</b></div>
+  </div>
+</div>
+<div class="hud" id="hudBR">
+  <div class="hud-title">ENERGY // OUTPUT</div>
+  <div class="hud-body">
+    <div class="hud-bars">
+      <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i>
+      <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i>
+      <i></i><i></i><i></i>
+    </div>
+    <div class="hud-row"><span>OUTPUT</span><b>87%</b></div>
+  </div>
+</div>
+
+<!-- 底部对话框（文字 + 语音） -->
+<div id="chatBar">
+  <div id="reply"></div>
+  <div class="composer">
+    <button class="icon-btn" id="voiceBtn" title="语音输入">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="3" width="6" height="11" rx="3"/>
+        <path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>
+      </svg>
+    </button>
+    <input id="chatInput" placeholder="输入消息…" />
+    <button class="send-btn" id="sendBtn">SEND</button>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { Line2 } from 'three/addons/lines/Line2.js';
+import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
+import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
+
+const canvas = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x010304, 1);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x010304, 0.012);
+
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 0, 8);
+
+// ── 全息配色（蓝绿 / 青白）──────────────────────────────
+const CORE_COLOR = new THREE.Color(0x3fd6c8);   // 青绿
+const EDGE_COLOR = new THREE.Color(0xa8f0ff);   // 青白
+const PARTICLE_COLOR = new THREE.Color(0x7fe8dd);
+
+// ── 1. 核心球：半透明 + 菲涅尔边缘发光 + 扫描线 + 抖动 ──
+const coreGeo = new THREE.IcosahedronGeometry(1.6, 4);
+const coreMat = new THREE.ShaderMaterial({
+  transparent: true,
+  depthWrite: false,
+  side: THREE.FrontSide,
+  uniforms: {
+    uTime: { value: 0 },
+    uColor: { value: CORE_COLOR },
+    uEdge: { value: EDGE_COLOR },
+  },
+  vertexShader: `
+    varying vec3 vNormal;
+    varying vec3 vView;
+    void main() {
+      vNormal = normalize(normalMatrix * normal);
+      vec4 mv = modelViewMatrix * vec4(position, 1.0);
+      vView = normalize(-mv.xyz);
+      gl_Position = projectionMatrix * mv;
+    }
+  `,
+  fragmentShader: `
+    varying vec3 vNormal;
+    varying vec3 vView;
+    uniform float uTime;
+    uniform vec3 uColor;
+    uniform vec3 uEdge;
+    void main() {
+      // 菲涅尔：边缘更亮更实，中心更透（体积光感）
+      float fresnel = pow(1.0 - abs(dot(normalize(vNormal), normalize(vView))), 2.5);
+      // 能量涌动：连续的波纹（不是块状）
+      float scan1 = sin(gl_FragCoord.y * 0.06 + uTime * 3.0) * 0.5 + 0.5;
+      float scan2 = sin(gl_FragCoord.x * 0.05 - uTime * 2.0) * 0.5 + 0.5;
+      float energy = (scan1 + scan2) * 0.5;
+      // 整体能量感：更实的发光 + 菲涅尔 + 能量流
+      float alpha = 0.12 + fresnel * 0.7 + energy * 0.22;
+      vec3 col = mix(uColor, uEdge, fresnel);
+      col += fresnel * 0.5 + energy * 0.25;
+      gl_FragColor = vec4(col, clamp(alpha, 0.0, 1.0));
+    }
+  `,
+});
+const core = new THREE.Mesh(coreGeo, coreMat);
+scene.add(core);
+
+// 内核发光点：柔和散开的光晕（径向渐变，不是硬边实心球）
+const innerGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+  map: makeGlowTexture(),
+  color: 0xd8fff6,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false,
+  transparent: true,
+  opacity: 0.7,
+}));
+innerGlow.scale.set(2.55, 2.55, 1);
+core.add(innerGlow);
+
+// ── 2. Fibonacci 点阵（球面光点，全息投影的标志性点阵）──
+const N = 11000;
+const positions = new Float32Array(N * 3);
+const golden = Math.PI * (3 - Math.sqrt(5));
+for (let i = 0; i < N; i++) {
+  const y = 1 - (i / (N - 1)) * 2;
+  const r = Math.sqrt(1 - y * y);
+  const theta = golden * i;
+  const jr = 1 + (Math.random() - 0.5) * 0.12;
+  positions[i * 3] = Math.cos(theta) * r * 1.58 * jr;
+  positions[i * 3 + 1] = y * 1.58 * jr;
+  positions[i * 3 + 2] = Math.sin(theta) * r * 1.58 * jr;
+}
+const dotGeo = new THREE.BufferGeometry();
+dotGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+const dotMat = new THREE.PointsMaterial({
+  color: 0xa8f0ff,
+  size: 0.03,
+  transparent: true,
+  opacity: 0.5,
+  depthWrite: false,
+  blending: THREE.AdditiveBlending,
+});
+const dots = new THREE.Points(dotGeo, dotMat);
+core.add(dots);
+
+// 十字星环（颗粒球体外层的两个交叉发光环）
+const crossRingMat = new THREE.MeshBasicMaterial({
+  color: 0xc0f0ff, transparent: true, opacity: 0.35, depthWrite: false,
+  blending: THREE.AdditiveBlending,
+});
+// 拖尾材质（更淡，形成拖拽残影）
+const trailMat = new THREE.MeshBasicMaterial({
+  color: 0xc0f0ff, transparent: true, opacity: 0.12, depthWrite: false,
+  blending: THREE.AdditiveBlending,
+});
+// 多层光晕材质（光从环线向外层层散开）
+const glowMat1 = new THREE.MeshBasicMaterial({ color: 0xc0f0ff, transparent: true, opacity: 0.1, depthWrite: false, blending: THREE.AdditiveBlending });
+const glowMat2 = new THREE.MeshBasicMaterial({ color: 0xc0f0ff, transparent: true, opacity: 0.05, depthWrite: false, blending: THREE.AdditiveBlending });
+const glowMat3 = new THREE.MeshBasicMaterial({ color: 0xc0f0ff, transparent: true, opacity: 0.02, depthWrite: false, blending: THREE.AdditiveBlending });
+// 横向星环组（水平，7 条同心圆环，带拖尾 + 多层光晕）
+const ringGroupH = new THREE.Group();
+ringGroupH.rotation.x = Math.PI / 2;
+for (let i = 0; i < 7; i++) {
+  const r = 1.9 + i * 0.04;
+  ringGroupH.add(new THREE.Mesh(new THREE.TorusGeometry(r, 0.015, 8, 200), glowMat1));
+  ringGroupH.add(new THREE.Mesh(new THREE.TorusGeometry(r, 0.04, 8, 200), glowMat2));
+  ringGroupH.add(new THREE.Mesh(new THREE.TorusGeometry(r, 0.08, 8, 200), glowMat3));
+  ringGroupH.add(new THREE.Mesh(new THREE.TorusGeometry(r, 0.004, 8, 200), crossRingMat));
+  const trail = new THREE.Mesh(new THREE.TorusGeometry(r, 0.004, 8, 200), trailMat);
+  trail.rotation.y = 0.15;
+  ringGroupH.add(trail);
+}
+// 竖向星环组（垂直，7 条同心圆环，带拖尾 + 多层光晕）
+const ringGroupV = new THREE.Group();
+ringGroupV.rotation.y = Math.PI / 2;
+for (let i = 0; i < 7; i++) {
+  const r = 1.9 + i * 0.04;
+  ringGroupV.add(new THREE.Mesh(new THREE.TorusGeometry(r, 0.015, 8, 200), glowMat1));
+  ringGroupV.add(new THREE.Mesh(new THREE.TorusGeometry(r, 0.04, 8, 200), glowMat2));
+  ringGroupV.add(new THREE.Mesh(new THREE.TorusGeometry(r, 0.08, 8, 200), glowMat3));
+  ringGroupV.add(new THREE.Mesh(new THREE.TorusGeometry(r, 0.004, 8, 200), crossRingMat));
+  const trail = new THREE.Mesh(new THREE.TorusGeometry(r, 0.004, 8, 200), trailMat);
+  trail.rotation.y = 0.15;
+  ringGroupV.add(trail);
+}
+// 十字星环整体（父 group，整体倾斜，斜着交错套转）
+const crossRing = new THREE.Group();
+crossRing.add(ringGroupH);
+crossRing.add(ringGroupV);
+crossRing.rotation.z = 0.5;
+scene.add(crossRing);
+
+// ── 3. 线框球体（三角形网格，线条纵横交错包裹核心，用 Line2 加粗）──
+const wireIcosa = new THREE.IcosahedronGeometry(3.8, 3);
+
+// 上层主线：青白 + 更亮 + additive + 粗线
+const wireMeshMat = new LineMaterial({
+  color: 0xc8e8f0, transparent: true, opacity: 0.25, depthWrite: false,
+  blending: THREE.AdditiveBlending, linewidth: 1.0,
+});
+wireMeshMat.resolution.set(window.innerWidth, window.innerHeight);
+const wireMeshGeo = new LineSegmentsGeometry();
+wireMeshGeo.setPositions(new THREE.WireframeGeometry(wireIcosa).attributes.position.array);
+const wireMesh = new Line2(wireMeshGeo, wireMeshMat);
+wireMesh.computeLineDistances();
+core.add(wireMesh);
+
+// ── 3.5 卫星导轨（两个卫星轨道 + 卫星拖尾）──
+const orbitMat = new THREE.MeshBasicMaterial({
+  color: 0xa0d8e8, transparent: true, opacity: 0.35, depthWrite: false,
+  blending: THREE.AdditiveBlending,
+});
+function circlePoints(radius, segments) {
+  const pts = [];
+  for (let i = 0; i <= segments; i++) {
+    const theta = i / segments * Math.PI * 2;
+    pts.push(new THREE.Vector3(Math.cos(theta) * radius, 0, Math.sin(theta) * radius));
+  }
+  return pts;
+}
+const SAT_TRAIL = 14;
+const satOrbits = [
+  { r: 4.2, rx: Math.PI / 2, speed: 0.5, angle: 0 },
+  { r: 4.9, rx: Math.PI / 2 + 0.6, speed: -0.38, angle: Math.PI },
+  { r: 5.6, rx: Math.PI / 2 - 0.6, speed: 0.3, angle: Math.PI / 2 },
+];
+const satMat = new THREE.ShaderMaterial({
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  vertexShader: `
+    attribute float aTrail;
+    varying float vTrail;
+    void main() {
+      vTrail = aTrail;
+      vec4 mv = modelViewMatrix * vec4(position, 1.0);
+      gl_PointSize = (1.0 - vTrail) * 30.0 + 7.0;
+      gl_Position = projectionMatrix * mv;
+    }
+  `,
+  fragmentShader: `
+    varying float vTrail;
+    void main() {
+      float d = length(gl_PointCoord - vec2(0.5));
+      if (d > 0.5) discard;
+      float falloff = 1.0 - smoothstep(0.0, 0.5, d);
+      float alpha = (1.0 - vTrail) * 1.0 * falloff;
+      gl_FragColor = vec4(vec3(0.82, 0.92, 1.0), alpha);
+    }
+  `,
+});
+// 卫星导轨父容器（像十字星环一样整体倾斜 + 转动）
+const satRingGroup = new THREE.Group();
+satRingGroup.rotation.z = 0.5;
+scene.add(satRingGroup);
+for (let o = 0; o < satOrbits.length; o++) {
+  const so = satOrbits[o];
+  const g = new THREE.Group();
+  g.rotation.x = so.rx;
+  satRingGroup.add(g);
+  const orbitMesh = new THREE.Mesh(new THREE.TorusGeometry(so.r, 0.006, 8, 200), orbitMat);
+  orbitMesh.rotation.x = Math.PI / 2;
+  g.add(orbitMesh);
+  const pos = new Float32Array(SAT_TRAIL * 3);
+  const trail = new Float32Array(SAT_TRAIL);
+  for (let k = 0; k < SAT_TRAIL; k++) trail[k] = k / (SAT_TRAIL - 1);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('aTrail', new THREE.BufferAttribute(trail, 1));
+  const pts = new THREE.Points(geo, satMat);
+  g.add(pts);
+  so.pos = pos;
+  so.pts = pts;
+}
+
+// ── 4. 流星拖尾粒子（向上流动，头部亮尾部渐暗）──
+const METEORS = 80;
+const TRAIL = 12;
+const trailTotal = METEORS * TRAIL;
+const tPos = new Float32Array(trailTotal * 3);
+const tTrail = new Float32Array(trailTotal);
+const meteors = [];
+for (let m = 0; m < METEORS; m++) {
+  meteors.push({
+    x: (Math.random() - 0.5) * 20,
+    z: (Math.random() - 0.5) * 20,
+    y: -4 + Math.random() * 4,
+    speed: 0.02 + Math.random() * 0.04,
+  });
+  for (let k = 0; k < TRAIL; k++) {
+    tTrail[m * TRAIL + k] = k / (TRAIL - 1);
+  }
+}
+const tGeo = new THREE.BufferGeometry();
+tGeo.setAttribute('position', new THREE.BufferAttribute(tPos, 3));
+tGeo.setAttribute('aTrail', new THREE.BufferAttribute(tTrail, 1));
+const tMat = new THREE.ShaderMaterial({
+  transparent: true,
+  depthWrite: false,
+  blending: THREE.AdditiveBlending,
+  vertexShader: `
+    attribute float aTrail;
+    varying float vTrail;
+    void main() {
+      vTrail = aTrail;
+      vec4 mv = modelViewMatrix * vec4(position, 1.0);
+      gl_PointSize = (1.0 - vTrail) * 5.0 + 1.5;
+      gl_Position = projectionMatrix * mv;
+    }
+  `,
+  fragmentShader: `
+    varying float vTrail;
+    void main() {
+      float d = length(gl_PointCoord - vec2(0.5));
+      if (d > 0.5) discard;
+      float falloff = 1.0 - smoothstep(0.0, 0.5, d);
+      float alpha = (1.0 - vTrail) * 0.85 * falloff;
+      gl_FragColor = vec4(vec3(1.0), alpha);
+    }
+  `,
+});
+const particles = new THREE.Points(tGeo, tMat);
+scene.add(particles);
+
+// ── 4.5 波浪颗粒地面（球体下方的粒子波浪）──
+const GCOLS = 160;
+const GROWS = 160;
+const groundTotal = GCOLS * GROWS;
+const gPos = new Float32Array(groundTotal * 3);
+const groundGeo = new THREE.BufferGeometry();
+groundGeo.setAttribute('position', new THREE.BufferAttribute(gPos, 3));
+const groundMat = new THREE.PointsMaterial({
+  color: 0xffffff,
+  size: 0.09,
+  map: makeGlowTexture(),
+  transparent: true,
+  opacity: 0.4,
+  depthWrite: false,
+  blending: THREE.AdditiveBlending,
+});
+const ground = new THREE.Points(groundGeo, groundMat);
+ground.position.y = -4.0;
+scene.add(ground);
+const gJitter = new Float32Array(groundTotal * 2);
+for (let i = 0; i < groundTotal; i++) {
+  gJitter[i * 2] = (Math.random() - 0.5) * 0.14;
+  gJitter[i * 2 + 1] = (Math.random() - 0.5) * 0.14;
+}
+
+// ── 5. 中央光晕（体积光感的 Sprite）──
+function makeGlowTexture() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const ctx = c.getContext('2d');
+  const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  g.addColorStop(0, 'rgba(190,255,245,0.9)');
+  g.addColorStop(0.25, 'rgba(120,230,220,0.35)');
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 128, 128);
+  return new THREE.CanvasTexture(c);
+}
+const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+  map: makeGlowTexture(),
+  blending: THREE.AdditiveBlending,
+  depthWrite: false,
+  transparent: true,
+  opacity: 0.4,
+}));
+glow.scale.set(5, 5, 1);
+scene.add(glow);
+
+// ── 动画循环 ──────────────────────────────────────────────
+const clock = new THREE.Clock();
+const root = new THREE.Group();
+root.add(core);
+scene.add(root);
+
+function animate() {
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+
+  // 核心球：只绕 Y 轴旋转（与线框球反向），无呼吸无抖动
+  core.rotation.y = t * 0.25;
+  coreMat.uniforms.uTime.value = t;
+
+  // 内核光晕呼吸收缩（光源束缚在颗粒球体内，收缩段用平方加速增强“吸”感）
+  const s = Math.sin(t * 1.3);
+  const breathe = 1 + (s >= 0 ? s : -s * s) * 0.22;
+  const ig = 2.55 * breathe;
+  innerGlow.scale.set(ig, ig, 1);
+
+  // 十字星环：两个环独立交错转动（一正一反）
+  crossRing.rotation.x = t * 0.3 + Math.sin(t * 0.35) * 0.3;
+  satRingGroup.rotation.x = -t * 0.22;
+
+  // 点阵跟随核心球旋转，不再独立自转（与能量球融合）
+  // 绿色光球 + 颗粒球体一起呼吸收缩（同步，幅度 ±5%）
+  core.scale.setScalar(1 + s * 0.05);
+
+  // 线框球 + 交点颗粒：缓慢转动（与核心球反向），无呼吸摆动
+  wireMesh.rotation.y = -t * 0.12;
+
+  // 流星拖尾：整串向上移动，头部在上，尾部向下拖
+  for (let m = 0; m < METEORS; m++) {
+    const mt = meteors[m];
+    mt.y += mt.speed;
+    if (mt.y > 3) {
+      mt.y = -4;
+      mt.x = (Math.random() - 0.5) * 20;
+      mt.z = (Math.random() - 0.5) * 20;
+    }
+    for (let k = 0; k < TRAIL; k++) {
+      const idx = (m * TRAIL + k) * 3;
+      tPos[idx] = mt.x;
+      tPos[idx + 1] = mt.y - k * 0.12;
+      tPos[idx + 2] = mt.z;
+    }
+  }
+  particles.geometry.attributes.position.needsUpdate = true;
+
+  // 波浪地面：粒子按正弦波起伏
+  for (let i = 0; i < groundTotal; i++) {
+    const col = i % GCOLS;
+    const row = (i / GCOLS) | 0;
+    const x = (col / (GCOLS - 1) - 0.5) * 22 + gJitter[i * 2];
+    const z = (row / (GROWS - 1) - 0.5) * 22 + gJitter[i * 2 + 1];
+    const wave = Math.sin(x * 0.4 + t * 1.0) * 0.2 + Math.cos(z * 0.5 + t * 0.8) * 0.2 + Math.sin((x + z) * 0.3 + t * 1.4) * 0.12;
+    gPos[i * 3] = x;
+    gPos[i * 3 + 1] = wave;
+    gPos[i * 3 + 2] = z;
+  }
+  ground.geometry.attributes.position.needsUpdate = true;
+
+  // 卫星：沿导轨运动，拖尾跟随
+  for (let o = 0; o < satOrbits.length; o++) {
+    const so = satOrbits[o];
+    so.angle += so.speed * 0.02;
+    for (let k = 0; k < SAT_TRAIL; k++) {
+      const a = so.angle - k * 0.02;
+      const idx = k * 3;
+      so.pos[idx] = Math.cos(a) * so.r;
+      so.pos[idx + 1] = 0;
+      so.pos[idx + 2] = Math.sin(a) * so.r;
+    }
+    so.pts.geometry.attributes.position.needsUpdate = true;
+  }
+
+  // 光晕呼吸
+  glow.material.opacity = 0.45 + Math.sin(t * 1.6) * 0.12;
+
+  renderer.render(scene, camera);
+}
+// 更新时间显示
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  const s = String(now.getSeconds()).padStart(2, '0');
+  document.getElementById('clock').textContent = h + ':' + m + ':' + s;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+animate();
+
+// ── 底部对话框（文字 + 语音原型）───────────────────────
+const chatInput = document.getElementById('chatInput');
+const sendBtn = document.getElementById('sendBtn');
+const voiceBtn = document.getElementById('voiceBtn');
+const reply = document.getElementById('reply');
+
+function showReply(text) {
+  reply.textContent = text;
+  reply.classList.add('show');
+}
+
+function send() {
+  const v = chatInput.value.trim();
+  if (!v) return;
+  chatInput.value = '';
+  showReply('GINA 回复中…');
+  setTimeout(() => {
+    showReply('已收到：「' + v + '」—— 当前为视觉原型，接入后端后由 Gina 实时回复。');
+  }, 420);
+}
+sendBtn.addEventListener('click', send);
+chatInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    send();
+  }
+});
+voiceBtn.addEventListener('click', () => voiceBtn.classList.toggle('rec'));
+
+showReply('全息核心已就绪。我能为你做什么？');
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  wireMeshMat.resolution.set(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>

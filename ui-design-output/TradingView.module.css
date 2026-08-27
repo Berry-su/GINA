@@ -1,0 +1,79 @@
+/* 自动生成：由 Design Spec 确定性产出（token 集：单色精密仪器） */
+:root {
+  --c-bg: #050506;
+  --c-surface: #0a0a0b;
+  --c-surfaceAlt: #0f0f10;
+  --c-line: #2a2a2c;
+  --c-lineBright: #3a3a3c;
+  --c-text: #e6e6e6;
+  --c-textDim: #8a8a8e;
+  --c-textFaint: #555558;
+  --c-up: #e5484d;
+  --c-down: #46a758;
+  --c-risk: #ff3b30;
+  --c-neutral: #8a8a8e;
+}
+
+.root {
+  background: var(--c-bg);
+  color: var(--c-text);
+  min-height: 100vh;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: ui-sans-serif, system-ui;
+}
+
+/* ── 文本 ── */
+.node-text-label { font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-textDim); }
+.node-text-value { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:14px; color:var(--c-text); }
+.node-text-title { font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-textDim); font-size:16px;color:var(--c-text); }
+.node-text-body { font-size:13px;color:var(--c-text); }
+
+/* ── 面板（切角，无圆角） ── */
+.node-panel-default,
+.node-panel-metric,
+.node-panel-table {
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+  padding: 12px;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+}
+.panelTitle { font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-textDim); margin-bottom:8px; }
+
+/* ── metric ── */
+.node-metric-neutral, .node-metric-up, .node-metric-down, .node-metric-risk {
+  display:flex;flex-direction:column;gap:4px;
+}
+.metricLabel { font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--c-textDim); }
+.metricValue { font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:14px; }
+.node-metric-neutral .metricValue { color:var(--c-neutral); }
+.node-metric-up .metricValue { color:var(--c-up); }
+.node-metric-down .metricValue { color:var(--c-down); }
+.node-metric-risk .metricValue { color:var(--c-risk); }
+
+/* ── status ── */
+.node-status-default { font-size:11px;text-transform:uppercase;letter-spacing:0.08em; }
+.node-status-default[data-tone="up"] { color:var(--c-up); }
+.node-status-default[data-tone="down"] { color:var(--c-down); }
+.node-status-default[data-tone="risk"] { color:var(--c-risk); }
+.node-status-default[data-tone="neutral"] { color:var(--c-neutral); }
+
+/* ── button ── */
+.node-button-primary, .node-button-ghost {
+  border:1px solid var(--c-lineBright);
+  padding:6px 12px;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer;
+  background:transparent;color:var(--c-text);
+}
+.node-button-primary { background:var(--c-lineBright);color:var(--c-bg); }
+
+/* ── divider ── */
+.node-divider-default { height:1px;background:var(--c-line); }
+
+/* ── table ── */
+.tableRow { display:flex;gap:8px;padding:4px 0;border-bottom:1px solid var(--c-line); }
+.tableCell { flex:1;font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:14px; color:var(--c-text); }
+
+/* ── list ── */
+.listItem { padding:4px 0;border-bottom:1px solid var(--c-line);font-size:13px;color:var(--c-text); }
