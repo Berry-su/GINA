@@ -25,6 +25,7 @@ import { runRuntimeInjector } from './context/runtime-injector.js'
 import { initGrowthEngine } from './memory/growth-engine.js'
 import { initProactivePerception, startProactivePolling } from './memory/proactive-perception.js'
 import { initAutoPlanner } from './memory/auto-planner.js'
+import { startNewsScheduler } from './data-sources/news-scheduler.js'
 import { initPlanFeedbackLoop } from './memory/plan-feedback-loop.js'
 import { initGinaBrain } from './brain/index.js'
 import { seedKnowledgeOnce } from './knowledge/seed-knowledge.js'
@@ -1910,6 +1911,14 @@ async function main() {
     console.log('[system] 主动感知 + 自动规划已启动')
   } catch (err) {
     console.warn('[proactive] 主动感知/自动规划启动失败（不影响主功能）:', err.message)
+  }
+
+  // 启动新闻调度器（每 15 分钟自动采集，供对话上下文注入；失败不影响主流程）
+  try {
+    startNewsScheduler({ intervalMs: 15 * 60 * 1000 })
+    console.log('[system] 新闻调度器已启动')
+  } catch (err) {
+    console.warn('[news] 新闻调度器启动失败（不影响主功能）:', err.message)
   }
 
   // 首次启动：播种知识（jarvis.db 知识记忆 + CATS-Net 快照；幂等，重复启动不产生重复记录）

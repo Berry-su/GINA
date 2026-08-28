@@ -34,7 +34,7 @@ const DEFAULT_CONFIG = {
   maxItemsPerSource: 20,
   dedupWindowMs: 24 * 60 * 60 * 1000,
   importanceThreshold: 0.25,
-  injectToKnowledge: true,
+  injectToKnowledge: false,
   updateIntervalMs: 15 * 60 * 1000,
   maxKnowledgePerBatch: 30,
 }

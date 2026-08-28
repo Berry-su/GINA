@@ -8,6 +8,7 @@ import { buildWorldcupPanelStateContext } from '../worldcup.js'
 import { buildPersonCardRuntimeContext, buildPersonCardPanelStateContext } from '../person-cards.js'
 import { buildDocRuntimeContext, buildDocPanelStateContext, detectDocTopic } from '../docs.js'
 import { runCapabilityPrefeed } from '../capabilities/capability-registry.js'
+import { getNewsPromptBlock } from '../data-sources/news-prompt-block.js'
 
 export async function runRuntimeInjector({
   message = '',
@@ -27,6 +28,7 @@ export async function runRuntimeInjector({
   const detectedDocTopic = detectDocTopic(text)
   const docStateText = buildDocPanelStateContext(detectedDocTopic)
   const docContextText = buildDocRuntimeContext(text)
+  const newsContextText = getNewsPromptBlock({ maxItems: 5 })
 
   // Wave 1 优化：异步 await 全部并发跑。
   //   原实现多个 await 串行 = 累加耗时；改 Promise.all 后 = max(各自耗时)。
@@ -69,6 +71,7 @@ export async function runRuntimeInjector({
     weatherContextText,
     docStateText,
     docContextText,
+    newsContextText,
     taskExtraContextText,
   ].filter(Boolean)
 
@@ -84,6 +87,7 @@ export async function runRuntimeInjector({
     detectedDocTopic,
     docStateText,
     docContextText,
+    newsContextText,
     taskExtraContextText,
     taskExtraContextItems,
     contextText: contextParts.join('\n\n'),
