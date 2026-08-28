@@ -32,7 +32,7 @@ import { execInstallSoftware, listSoftwareInstallJobs } from './tools/software-i
 import { execDowngradeMemory, execMergeMemories, execProbeMemory, execRecallMemory, execSearchMemory, execSkipConsolidation, execSkipRecognition, execUpsertMemory } from './tools/memory.js'
 import { execManageReminder } from './tools/reminders.js'
 import { execGenerateImage, execGenerateLyrics, execGenerateMusic, execMediaMode, execMusic, execSpeak } from './tools/media.js'
-import { execAnalyzeImage, execManageApiCapability, execRunApiCapability } from './tools/api-capability.js'
+import { execAnalyzeImage, execCaptureScreen, execManageApiCapability, execRunApiCapability } from './tools/api-capability.js'
 import { fetchCalendarEvents, fetchRecentEmails, searchContacts } from '../data-sources/personal-data-sources.js'
 import { execManageRule } from './tools/rules.js'
 import { enqueueOrder, listOrders, completeOrder, nextPendingOrder, getOrderQueueStats } from '../order-queue.js'
@@ -361,6 +361,8 @@ async function executeToolUnchecked(name, args, context = {}) {
         return await execRunApiCapability(args, context)
       case 'analyze_image':
         return await execAnalyzeImage(args, context)
+      case 'capture_screen':
+        return await execCaptureScreen(args, context)
       case 'calendar_events':
         return await execCalendarEvents(args)
       case 'recent_emails':

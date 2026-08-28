@@ -15,6 +15,7 @@ import {
   normalizeApiCapabilityKind,
   setApiCapabilitySlotEnabled,
 } from '../api-slots.js'
+import { captureScreen } from '../../memory/vision-perceptor.js'
 
 const IMAGE_EXT_MIME = {
   '.png': 'image/png',
@@ -354,6 +355,35 @@ export async function execAnalyzeImage(args = {}, context = {}) {
       error: redactSlotSecrets(err.message, slot, slotApiKey),
       docs_hint: buildApiSlotContext(slot).slice(0, 1200),
     })
+  }
+}
+
+export async function execCaptureScreen(args = {}, context = {}) {
+  try {
+    const result = await captureScreen({
+      outputPath: args.output_path || args.outputPath,
+      displayId: args.display_id || args.displayId,
+      delay: args.delay,
+    })
+    if (!result?.success) {
+      return toolJson({
+        ok: false,
+        tool: 'capture_screen',
+        error: result?.error || '屏幕捕获失败',
+        guide: '若为 macOS，请确认已在「系统设置 → 隐私与安全性 → 屏幕录制」中授权本应用，否则截图为黑屏。',
+      })
+    }
+    return toolJson({
+      ok: true,
+      tool: 'capture_screen',
+      path: result.path,
+      size: result.size,
+      sizeFormatted: result.sizeFormatted,
+      timestamp: result.timestamp,
+      hint: '截图已保存。如需查看截图内容，请调用 analyze_image 并传入上面的 path。',
+    })
+  } catch (err) {
+    return toolJson({ ok: false, tool: 'capture_screen', error: err?.message || String(err) })
   }
 }
 

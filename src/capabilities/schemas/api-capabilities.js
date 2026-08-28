@@ -52,6 +52,23 @@ export const apiCapabilitySchemas = {
     },
   },
 
+  capture_screen: {
+    type: 'function',
+    function: {
+      name: 'capture_screen',
+      description: 'Take a screenshot of the current screen (macOS screencapture; requires Screen Recording permission). Use when the user asks to look at their screen, capture the screen, or see what is on screen. Returns the saved screenshot path; optionally call analyze_image on that path to inspect its content.',
+      parameters: {
+        type: 'object',
+        properties: {
+          output_path: { type: 'string', description: 'Optional absolute path to save the screenshot. Defaults to ~/Desktop/gina-screenshot-<timestamp>.png' },
+          display_id: { type: 'string', description: 'Optional display ID for multi-monitor setups.' },
+          delay: { type: 'number', description: 'Optional delay in seconds before capturing.' },
+        },
+        required: [],
+      },
+    },
+  },
+
   manage_api_capability: {
     type: 'function',
     function: {
