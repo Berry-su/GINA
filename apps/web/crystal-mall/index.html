@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Zichen-Runelith | Crystal Jewelry</title>
+<link rel="stylesheet" href="css/tokens.css">
+<style>
+  /* ── Hero Section ─────────────────── */
+  .hero {
+    position: relative;
+    height: 65vh;
+    min-height: 400px;
+    max-height: 560px;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+    padding: 0 24px 32px;
+    background: linear-gradient(180deg, #1A1410 0%, #2A1F18 40%, #3A2A1A 100%);
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 600px 400px at 50% 30%, rgba(139,111,212,0.15), transparent),
+      radial-gradient(ellipse 400px 300px at 70% 60%, rgba(201,162,75,0.1), transparent);
+  }
+  .hero-brand {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 2;
+  }
+  .hero-brand h1 {
+    font-family: "PingFang SC", serif;
+    font-size: 36px;
+    font-weight: 700;
+    color: #FAF7F2;
+    letter-spacing: 6px;
+    text-shadow: 0 2px 20px rgba(201,162,75,0.3);
+  }
+  .hero-brand .en {
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: #A09888;
+    margin-top: 4px;
+  }
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    text-align: center;
+  }
+  .hero-content .slogan {
+    font-family: "PingFang SC", serif;
+    font-size: 20px;
+    color: #E8D5A0;
+    margin-bottom: 20px;
+    letter-spacing: 2px;
+  }
+  .hero-content .cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 36px;
+    background: linear-gradient(135deg, #C9A24B, #A87F2E);
+    color: #fff;
+    font-weight: 600;
+    font-size: 15px;
+    border: none;
+    border-radius: 9999px;
+    cursor: pointer;
+    box-shadow: 0 0 24px rgba(201,162,75,0.3);
+    transition: all 0.3s;
+  }
+  .hero-content .cta:hover { transform: translateY(-2px); box-shadow: 0 6px 32px rgba(201,162,75,0.4); }
+
+  /* ── Floating particles ─────────────── */
+  .particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(201,162,75,0.4);
+    animation: float-up 6s ease-in infinite;
+  }
+  @keyframes float-up {
+    0% { opacity: 0; transform: translateY(0) scale(1); }
+    20% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-200px) scale(0); }
+  }
+
+  /* ── Sections ─────────────────── */
+  .section { padding: 32px 20px; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .section-header h2 {
+    font-family: "PingFang SC", serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #FAF7F2;
+  }
+  .section-header .view-all {
+    font-size: 13px;
+    color: #A09888;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* ── Categories Grid ─────────────── */
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .cat-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(160,152,136,0.15);
+    border-radius: 16px;
+    padding: 16px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .cat-card:hover {
+    background: rgba(201,162,75,0.08);
+    border-color: rgba(201,162,75,0.3);
+    transform: translateY(-2px);
+  }
+  .cat-card .emoji { font-size: 28px; margin-bottom: 8px; }
+  .cat-card .name { font-size: 11px; color: #A09888; line-height: 1.3; }
+
+  /* ── Product Scroll ─────────────── */
+  .product-scroll {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
+  }
+  .product-scroll::-webkit-scrollbar { display: none; }
+  .product-card {
+    flex: 0 0 160px;
+    scroll-snap-align: start;
+    background: rgba(26,20,16,0.85);
+    border: 1px solid rgba(160,152,136,0.15);
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .product-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+  .product-card .img {
+    aspect-ratio: 1;
+    background: linear-gradient(135deg, #F5F0E8, #E8E0D0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    position: relative;
+  }
+  .product-card .tag {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    padding: 3px 10px;
+    background: rgba(201,162,75,0.15);
+    border: 1px solid rgba(201,162,75,0.3);
+    border-radius: 9999px;
+    font-size: 10px;
+    color: #C9A24B;
+  }
+  .product-card .info {
+    padding: 12px;
+  }
+  .product-card .info .name {
+    font-size: 13px;
+    color: #FAF7F2;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .product-card .info .price {
+    font-family: "Fira Code", monospace;
+    font-size: 15px;
+    font-weight: 600;
+    color: #C9A24B;
+  }
+
+  /* ── GINA Banner ─────────────── */
+  .gina-banner {
+    margin: 0 20px;
+    padding: 24px;
+    background: linear-gradient(135deg, rgba(139,111,212,0.12), rgba(201,162,75,0.08));
+    border: 1px solid rgba(139,111,212,0.2);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .gina-banner:hover { border-color: rgba(139,111,212,0.4); transform: translateY(-2px); }
+  .gina-banner .orb {
+    width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0;
+    background: radial-gradient(circle at 35% 35%, #B8A4E8, #8B6FD4, #6B4FB8);
+    box-shadow: 0 0 24px rgba(139,111,212,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+  }
+  .gina-banner .text h3 { font-size: 16px; font-weight: 600; color: #FAF7F2; margin-bottom: 4px; }
+  .gina-banner .text p { font-size: 13px; color: #A09888; }
+
+  /* ── Bottom Tab Bar ─────────────── */
+  .tab-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: space-around;
+    height: 64px;
+    background: rgba(26,20,16,0.96);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(160,152,136,0.15);
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index: 100;
+  }
+  .tab {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    font-size: 10px; color: #6B6058;
+    cursor: pointer; padding: 6px 14px; transition: color 0.2s;
+  }
+  .tab.active { color: #C9A24B; }
+  .tab svg { width: 22px; height: 22px; }
+
+  /* ── Spacer for tab bar ─────────────── */
+  .tab-spacer { height: 80px; }
+</style>
+</head>
+<body>
+
+<!-- ═══ Hero ═══ -->
+<section class="hero">
+  <div class="hero-brand">
+    <h1>紫宸石箓</h1>
+    <div class="en">ZICHEN · RUNELITH</div>
+  </div>
+
+  <!-- floating particles -->
+  <div class="particle" style="left:20%;top:40%;animation-delay:0s"></div>
+  <div class="particle" style="left:60%;top:50%;animation-delay:1.5s"></div>
+  <div class="particle" style="left:80%;top:30%;animation-delay:3s"></div>
+  <div class="particle" style="left:35%;top:60%;animation-delay:4.5s"></div>
+
+  <div class="hero-content">
+    <div class="slogan" data-i18n="slogan">山有灵，晶有光</div>
+    <button class="cta" onclick="location.href='diy.html'" data-i18n="home.start_journey">Begin Your Crystal Journey →</button>
+  </div>
+</section>
+
+<!-- ═══ Categories ═══ -->
+<section class="section">
+  <div class="section-header">
+    <h2 data-i18n="home.categories">Categories</h2>
+  </div>
+  <div class="cat-grid" id="cat-grid"></div>
+</section>
+
+<!-- ═══ Hot Picks ═══ -->
+<section class="section">
+  <div class="section-header">
+    <h2 data-i18n="home.hot_picks">Popular Now</h2>
+    <span class="view-all" data-i18n="home.view_all">View All →</span>
+  </div>
+  <div class="product-scroll" id="product-scroll"></div>
+</section>
+
+<!-- ═══ GINA Banner ═══ -->
+<div class="gina-banner" onclick="location.href='ai.html'" style="margin-bottom:24px">
+  <div class="orb">💎</div>
+  <div class="text">
+    <h3 data-i18n="home.ask_gina">Ask GINA</h3>
+    <p data-i18n="home.gina_desc">Tell me your wish, find the perfect crystal</p>
+  </div>
+</div>
+
+<div class="tab-spacer"></div>
+
+<!-- ═══ Tab Bar ═══ -->
+<nav class="tab-bar">
+  <a class="tab active" data-tab="index.html" href="index.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>
+    <span data-i18n="nav.home">Home</span>
+  </a>
+  <a class="tab" data-tab="ai.html" href="ai.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+    <span data-i18n="nav.gina">GINA</span>
+  </a>
+  <a class="tab" data-tab="diy.html" href="diy.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="2" r="1.5" fill="currentColor"/><circle cx="12" cy="22" r="1.5" fill="currentColor"/><circle cx="2" cy="12" r="1.5" fill="currentColor"/><circle cx="22" cy="12" r="1.5" fill="currentColor"/></svg>
+    <span data-i18n="nav.diy">Design</span>
+  </a>
+  <a class="tab" data-tab="cart.html" href="cart.html" style="position:relative">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+    <span data-i18n="nav.cart">Cart</span>
+    <span id="cart-badge" style="display:none;position:absolute;top:0;right:4px;width:16px;height:16px;background:#C9A24B;color:#fff;border-radius:50%;font-size:9px;font-weight:700;display:none;align-items:center;justify-content:center">0</span>
+  </a>
+  <a class="tab" data-tab="profile.html" href="profile.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <span data-i18n="nav.profile">Account</span>
+  </a>
+</nav>
+
+<script src="js/data.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/common.js"></script>
+<script>
+  // ── 渲染分类 ──
+  const catGrid = document.getElementById('cat-grid');
+  CATEGORIES.forEach(cat => {
+    const card = document.createElement('div');
+    card.className = 'cat-card';
+    card.onclick = () => location.href = `diy.html?cat=${cat.id}`;
+    card.innerHTML = `
+      <div class="emoji">${cat.emoji}</div>
+      <div class="name" data-i18n="categories.${cat.id}">${I18n.lang === 'zh' ? cat.name_zh : cat.name_en}</div>
+    `;
+    catGrid.appendChild(card);
+  });
+
+  // ── 渲染热门商品 ──
+  const productScroll = document.getElementById('product-scroll');
+  PRODUCTS.slice(0, 8).forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'product-card';
+    card.onclick = () => location.href = `product.html?id=${p.id}`;
+    card.innerHTML = `
+      <div class="img">
+        <span class="tag">${I18n.lang === 'zh' ? p.tag_zh : p.tag_en}</span>
+        ${p.emoji}
+      </div>
+      <div class="info">
+        <div class="name">${I18n.lang === 'zh' ? p.name_zh : p.name_en}</div>
+        <div class="price">$${p.price}</div>
+      </div>
+    `;
+    productScroll.appendChild(card);
+  });
+
+  // ── 初始化 ──
+  I18n.init();
+</script>
+</body>
+</html>

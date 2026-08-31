@@ -230,6 +230,15 @@ const db = {
   getRecentConversationTimeline(limit = 50) {
     return _getDB().prepare('SELECT * FROM conversations ORDER BY timestamp DESC LIMIT ?').all(limit)
   },
+  getConversationsForThread(threadId, { sinceAt = null, limit = 60 } = {}) {
+    if (!threadId) return []
+    const base = 'SELECT * FROM conversations WHERE thread_id = ?'
+    const order = ' ORDER BY timestamp ASC'
+    if (sinceAt) {
+      return _getDB().prepare(`${base} AND timestamp >= ?${order} LIMIT ?`).all(threadId, sinceAt, limit)
+    }
+    return _getDB().prepare(`${base}${order} LIMIT ?`).all(threadId, limit)
+  },
   getRecentConversationPartners(limit = 10) {
     return _getDB().prepare(`SELECT DISTINCT from_id FROM conversations ORDER BY timestamp DESC LIMIT ?`).all(limit).map(r => r.from_id)
   },
@@ -738,6 +747,7 @@ export const getPersonMemory = db.getPersonMemory;
 export const upsertUserProfile = db.upsertUserProfile;
 export const getRecentConversation = db.getRecentConversation;
 export const getRecentConversationTimeline = db.getRecentConversationTimeline;
+export const getConversationsForThread = db.getConversationsForThread;
 export const getValidPrefetchCache = db.getValidPrefetchCache;
 export const getUnconsumedUISignals = db.getUnconsumedUISignals;
 export const markUISignalsConsumed = db.markUISignalsConsumed;

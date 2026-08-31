@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Gina · Silver Core C</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@300;400;500&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{width:100vw;height:100vh;overflow:hidden;font-family:'JetBrains Mono','Orbitron',sans-serif;
+    --bg:#05060a;--silv:#e8edf5;--silv2:#a9b4c6;--dim:#68707f;--faint:#3a4048;
+    --line:rgba(200,212,228,.13);--line-hi:rgba(225,235,248,.45);
+    --chip:rgba(13,15,20,.7);--chip2:rgba(8,10,13,.82)}
+  canvas#scene{position:fixed;inset:0;display:block;background:var(--bg)}
+  .grid{position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:52px 52px;opacity:.11;mask-image:radial-gradient(circle at 50% 42%,#000 26%,transparent 70%)}
+  .vig{position:fixed;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at 50% 40%,transparent 32%,rgba(4,5,7,.92) 100%)}
+
+  .topbar{position:fixed;top:0;left:0;right:0;height:52px;z-index:5;display:flex;align-items:center;padding:0 26px;justify-content:space-between}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand .mk{width:22px;height:22px;display:grid;place-items:center;border:1px solid var(--line-hi)}
+  .brand .mk i{width:6px;height:6px;background:var(--silv);box-shadow:0 0 10px var(--silv)}
+  .brand b{font-family:'Orbitron';font-weight:500;letter-spacing:.26em;font-size:13px;color:var(--silv)}
+  .brand span{font-size:7.5px;letter-spacing:.2em;color:var(--dim)}
+  .topstatus{margin-left:auto;display:flex;align-items:center;gap:15px;font-size:8.5px;letter-spacing:.1em}
+  .st{display:flex;align-items:center;gap:6px}
+  .st .dot{width:5px;height:5px;border-radius:50%;background:var(--silv);box-shadow:0 0 7px var(--silv)}
+  .st .lbl{color:var(--dim)} .st b{font-weight:500;color:var(--silv2)}
+
+  .mod{position:fixed;z-index:4;background:var(--chip);border:1px solid var(--line);padding:11px 13px;width:192px}
+  .mod::before{content:'';position:absolute;top:-1px;left:0;width:28px;height:1px;background:var(--line-hi)}
+  .mod h5{font-size:7.5px;letter-spacing:.2em;color:var(--silv2);margin-bottom:10px;display:flex;align-items:center;gap:7px}
+  .mod h5::before{content:'';width:4px;height:4px;background:var(--silv);box-shadow:0 0 5px var(--silv)}
+  .mod h5 em{font-style:normal;color:var(--dim);margin-left:auto;font-size:7px;letter-spacing:.06em}
+  .row{display:flex;justify-content:space-between;gap:12px;font-size:10px;margin:5px 0}
+  .row span{color:var(--dim)} .row b{font-weight:500;color:var(--silv)}
+  .row b.s2{color:var(--silv2)} .row b.hi{color:var(--silv);text-shadow:0 0 7px rgba(225,235,248,.5)}
+  .pv{font-family:'Orbitron';font-size:17px;letter-spacing:.1em;color:var(--silv);text-align:center;padding:7px 0}
+  .wave{width:100%;height:30px;display:block;margin-top:3px}
+  .moods{display:flex;justify-content:space-between;font-size:7px;letter-spacing:.12em;color:var(--faint);margin-top:3px}
+
+  .hist{position:fixed;left:26px;bottom:22px;width:192px;z-index:4;background:var(--chip2);border:1px solid var(--line);padding:11px 13px}
+  .hist h5{font-size:7.5px;letter-spacing:.2em;color:var(--silv2);margin-bottom:9px}
+  .hitem{display:flex;gap:8px;font-size:9px;margin:5px 0;color:var(--silv2)}
+  .hitem .a{color:var(--dim);flex:none}
+  .hitem .txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hitem.me .txt{color:var(--silv)} .hitem.gina .txt{color:var(--dim)}
+
+  .console{position:fixed;left:240px;right:26px;bottom:22px;z-index:5;background:var(--chip2);border:1px solid var(--line)}
+  .console::before{content:'';position:absolute;top:-1px;left:0;width:44px;height:1px;background:var(--line-hi)}
+  .reply{margin:11px 15px 7px;font-size:10.5px;line-height:1.7;color:var(--silv);min-height:18px}
+  .reply .g{color:var(--silv2)}
+  .comp{display:flex;align-items:center;gap:8px;border-top:1px solid var(--line);padding:9px 12px}
+  .comp::before{content:'❯';color:var(--silv);font-weight:700;padding-left:3px}
+  .inp{flex:1;background:transparent;border:none;outline:none;color:var(--silv);font:11.5px 'JetBrains Mono',monospace}
+  .inp::placeholder{color:var(--faint)}
+  .send{font-family:'Orbitron';font-size:8px;letter-spacing:.2em;color:var(--silv2)}
+  .tag{position:fixed;left:50%;transform:translateX(-50%);top:16px;z-index:6;font-family:'Orbitron';font-size:8px;letter-spacing:.18em;color:var(--silv2);background:var(--chip);border:1px solid var(--line);padding:4px 12px}
+</style>
+</head>
+<body>
+<div class="grid"></div><div class="vig"></div><canvas id="scene"></canvas>
+<div class="tag">GINA · LUMINOUS SILVER CORE</div>
+
+<div class="topbar">
+  <div class="brand"><div class="mk"><i></i></div><div><b>AI&nbsp;ASSISTANT</b><br><span>数字意识交互系统 · V2.1</span></div></div>
+  <div class="topstatus">
+    <div class="st"><span class="dot"></span><span class="lbl">CORE</span><b>ONLINE</b></div>
+    <div class="st"><span class="dot"></span><span class="lbl">SYSTEM</span><b>RUNNING</b></div>
+  </div>
+</div>
+
+<div class="mod" style="left:26px;top:72px"><h5>语义理解分析<em>SEMANTICS</em></h5><canvas class="wave" id="w1" width="164" height="58"></canvas><div class="row"><span>置信度</span><b>87%</b></div></div>
+<div class="mod" style="left:26px;top:242px"><h5>知识图谱延伸<em>GRAPH</em></h5><canvas class="wave" id="w2" width="164" height="74"></canvas></div>
+<div class="mod" style="left:26px;top:402px"><h5>情感变化分析<em>EMOTION</em></h5><div class="pv">75%</div><div class="row"><span>正向</span><b class="hi">62%</b></div><div class="row"><span>负向</span><b>13%</b></div></div>
+
+<div class="mod" style="right:26px;top:72px"><h5>信息熵分布<em>ENTROPY</em></h5><canvas class="wave" id="w4" width="164" height="74"></canvas></div>
+<div class="mod" style="right:26px;top:242px"><h5>话题关联度<em>RELEVANCE</em></h5><canvas class="wave" id="w5" width="164" height="74"></canvas></div>
+<div class="mod" style="right:26px;top:402px"><h5>实时功率谱<em>POWER</em></h5><canvas class="wave" id="w6" width="164" height="48"></canvas><div class="row" style="margin-top:5px"><span>当前功率</span><b class="hi">68.4%</b></div></div>
+
+<div class="hist"><h5>最近对话</h5>
+  <div class="hitem me"><span class="a">❯</span><span class="txt">今天天气怎么样？</span></div>
+  <div class="hitem gina"><span class="a">◂</span><span class="txt">已为你查询到今日天气…</span></div>
+  <div class="hitem me"><span class="a">❯</span><span class="txt">帮我安排下周计划</span></div>
+  <div class="hitem gina"><span class="a">◂</span><span class="txt">已为你规划 5 项任务…</span></div>
+</div>
+
+<div class="console">
+  <div class="reply"><span class="g">GINA ·</span> 你好，我是你的 AI 助手。我可以解答问题、分析数据、提供建议。现在想让我做什么？</div>
+  <div class="comp"><input class="inp" placeholder="请输入你的问题……"/><div class="send">EXECUTE ▸</div></div>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+const SILV=0xdfe5ee, WHITE=0xffffff;
+const canvas=document.getElementById('scene');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.setClearColor(0x05060a,1);
+const scene=new THREE.Scene();
+scene.fog=new THREE.FogExp2(0x05060a,0.014);
+const camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,0.1,100);
+camera.position.set(0,0,8.6);
+
+function glowTex(){const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d').createRadialGradient(64,64,0,64,64,64);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.25,'rgba(230,240,255,.55)');g.addColorStop(1,'rgba(0,0,0,0)');const x=c.getContext('2d');x.fillStyle=g;x.fillRect(0,0,128,128);return new THREE.CanvasTexture(c)}
+
+const root=new THREE.Group();scene.add(root);
+
+// ===== 升级版明亮能量核心 =====
+// 外层半透明能量球(带内部能量雾)
+const coreGeo=new THREE.IcosahedronGeometry(1.45,5);
+const coreMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,side:THREE.FrontSide,
+ uniforms:{uTime:{value:0},uW:{value:new THREE.Color(WHITE)},uS:{value:new THREE.Color(SILV)}},
+ vertexShader:`varying vec3 vN,vV;varying vec3 vPos;void main(){vN=normalize(normalMatrix*normal);vec4 mv=modelViewMatrix*vec4(position,1.);vV=normalize(-mv.xyz);vPos=position;gl_Position=projectionMatrix*mv;}`,
+ fragmentShader:`varying vec3 vN,vV;varying vec3 vPos;uniform float uTime;uniform vec3 uW,uS;
+ void main(){float fr=pow(1.-abs(dot(normalize(vN),normalize(vV))),1.8);
+ // 内部能量雾: 噪声状流动
+ float no=sin(vPos.x*6.+uTime*2.)*sin(vPos.y*6.-uTime*1.6)*sin(vPos.z*6.+uTime*1.2);
+ float energy=smoothstep(-.3,.8,no)*.5;
+ float a=.06+fr*.55+energy*.3;
+ vec3 c=mix(vec3(0.82,0.87,0.94),uW,fr*.5+.3);
+ c+=uW*energy*.35+uS*fr*.2;
+ gl_FragColor=vec4(c,clamp(a,0.,1.));}`});
+const core=new THREE.Mesh(coreGeo,coreMat);root.add(core);
+
+// 白热内核(核心发光点)
+const innerGlow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),color:0xffffff,blending:THREE.AdditiveBlending,depthWrite:false,transparent:true,opacity:.95}));
+innerGlow.scale.set(1.6,1.6,1);core.add(innerGlow);
+
+// 外围大光晕
+const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),color:0xdbe7ff,blending:THREE.AdditiveBlending,depthWrite:false,transparent:true,opacity:.5}));
+glow.scale.set(4.4,4.4,1);core.add(glow);
+
+// 表面明亮粒子
+const N=12000,pos=new Float32Array(N*3),ga=Math.PI*(3-Math.sqrt(5));
+for(let i=0;i<N;i++){const y=1-(i/(N-1))*2,r=Math.sqrt(1-y*y),t=ga*i,jr=1+(Math.random()-.5)*.04;
+ pos[i*3]=Math.cos(t)*r*1.44*jr;pos[i*3+1]=y*1.44*jr;pos[i*3+2]=Math.sin(t)*r*1.44*jr;}
+const dotG=new THREE.BufferGeometry();dotG.setAttribute('position',new THREE.BufferAttribute(pos,3));
+core.add(new THREE.Points(dotG,new THREE.PointsMaterial({color:0xffffff,size:.02,transparent:true,opacity:.6,depthWrite:false,blending:THREE.AdditiveBlending})));
+
+// 表面细线框(晶格感)
+scene.add(new THREE.Mesh(new THREE.IcosahedronGeometry(1.45,2),new THREE.MeshBasicMaterial({color:0xcfd9ea,wireframe:true,transparent:true,opacity:.16,depthWrite:false,blending:THREE.AdditiveBlending})));
+
+// 3条发光光环(全息)
+const ringMat=new THREE.MeshBasicMaterial({color:0xdce8fb,transparent:true,opacity:.5,depthWrite:false,blending:THREE.AdditiveBlending});
+for(let i=0;i<3;i++){const tor=new THREE.Mesh(new THREE.TorusGeometry(1.9+i*.35,.008,8,200),ringMat);tor.rotation.x=Math.PI/2+((i-1)*.6);tor.rotation.y=i*.5;root.add(tor);}
+
+// 记忆节点轨道环
+const orbitGrp=new THREE.Group();root.add(orbitGrp);
+const orbitMat=new THREE.MeshBasicMaterial({color:SILV,transparent:true,opacity:.16,depthWrite:false,blending:THREE.AdditiveBlending});
+for(let i=0;i<3;i++){const tor=new THREE.Mesh(new THREE.TorusGeometry(2.6+i*.5,.0025,8,180),orbitMat);tor.rotation.x=Math.PI/2+((i-1)*.45);tor.rotation.y=i*.6;orbitGrp.add(tor);}
+const memNodes=[];
+for(let i=0;i<18;i++){const ang=i/18*Math.PI*2,ring=i%3,r=2.6+ring*.5;
+ const x=Math.cos(ang)*r,y=(i%6-3)*.08,z=Math.sin(ang)*r;
+ const s=new THREE.Mesh(new THREE.IcosahedronGeometry(.06,1),new THREE.MeshBasicMaterial({color:i%2?0xffffff:0xb9c6da,transparent:true,opacity:.85}));
+ s.position.set(x,y,z);orbitGrp.add(s);memNodes.push(s);}
+const connMat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.07,depthWrite:false,blending:THREE.AdditiveBlending});
+for(let i=0;i<memNodes.length;i++){const n1=memNodes[i],n2=memNodes[(i+3)%memNodes.length];const d=n2.position.clone().sub(n1.position),len=d.length();
+ const cyl=new THREE.Mesh(new THREE.CylinderGeometry(.0018,.0018,len,4),connMat);cyl.position.copy(n1.position).add(d.clone().multiplyScalar(.5));cyl.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());orbitGrp.add(cyl);}
+
+// 大线框外壳(六边形感)
+scene.add(new THREE.Mesh(new THREE.IcosahedronGeometry(3.6,1),new THREE.MeshBasicMaterial({color:0xb9c6da,wireframe:true,transparent:true,opacity:.06,depthWrite:false,blending:THREE.AdditiveBlending})));
+
+// 卫星
+const satGrp=new THREE.Group();satGrp.rotation.z=.3;scene.add(satGrp);const sats=[];
+[3.9,4.7,5.4].forEach((r,i)=>{const o=new THREE.Mesh(new THREE.TorusGeometry(r,.0025,8,180),new THREE.MeshBasicMaterial({color:0xaab6c8,transparent:true,opacity:.2,depthWrite:false,blending:THREE.AdditiveBlending}));o.rotation.x=Math.PI/2;
+ const g=new THREE.Group();g.rotation.x=Math.PI/2+(i-1)*.5;g.add(o);
+ const sp=new THREE.Mesh(new THREE.SphereGeometry(.05,8,8),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.95}));sp.position.set(r,0,0);g.add(sp);satGrp.add(g);sats.push({sp,r});});
+
+// 流星
+const M=60,T=10,mp=new Float32Array(M*T*3),mt=new Float32Array(M*T),met=[];
+for(let m=0;m<M;m++){met.push({x:(Math.random()-.5)*20,z:(Math.random()-.5)*20,y:-4+Math.random()*5,sp:.02+Math.random()*.04});for(let k=0;k<T;k++)mt[m*T+k]=k/(T-1);}
+const mgeo=new THREE.BufferGeometry();mgeo.setAttribute('position',new THREE.BufferAttribute(mp,3));mgeo.setAttribute('aT',new THREE.BufferAttribute(mt,1));
+const mmat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+ vertexShader:`attribute float aT;varying float vT;void main(){vT=aT;vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=(1.-vT)*3.5+1.2;gl_Position=projectionMatrix*mv;}`,
+ fragmentShader:`varying float vT;void main(){float d=length(gl_PointCoord-vec2(.5));if(d>.5)discard;gl_FragColor=vec4(vec3(.85,.9,.98),(1.-vT)*.5*(1.-smoothstep(0.,.5,d)));}`});
+const mpObj=new THREE.Points(mgeo,mmat);scene.add(mpObj);
+
+// 波浪地面
+const GC=100,GP=GC*GC,gp=new Float32Array(GP*3),gj=new Float32Array(GP*2);
+for(let i=0;i<GP;i++){gj[i*2]=(Math.random()-.5)*.08;gj[i*2+1]=(Math.random()-.5)*.08;}
+const ggeo=new THREE.BufferGeometry();ggeo.setAttribute('position',new THREE.BufferAttribute(gp,3));
+const ground=new THREE.Points(ggeo,new THREE.PointsMaterial({color:0xaab4c4,size:.06,map:glowTex(),transparent:true,opacity:.3,depthWrite:false,blending:THREE.AdditiveBlending}));ground.position.y=-4.0;scene.add(ground);
+
+// 动画
+const clock=new THREE.Clock();
+function animate(){requestAnimationFrame(animate);const t=clock.getElapsedTime();
+ core.rotation.y=t*.2;coreMat.uniforms.uTime.value=t;
+ core.scale.setScalar(1+Math.sin(t*1.2)*.05);
+ innerGlow.scale.setScalar(1.6*(1+Math.sin(t*1.5)*.25));
+ glow.scale.setScalar(4.4*(1+Math.sin(t*1.3)*.12));
+ orbitGrp.rotation.y=t*.12;
+ for(const s of sats){const a=t*.26;s.sp.position.set(Math.cos(a)*s.r,0,Math.sin(a)*s.r);}
+ for(let m=0;m<M;m++){const o=met[m];o.y+=o.sp;if(o.y>3){o.y=-4;o.x=(Math.random()-.5)*20;o.z=(Math.random()-.5)*20;}for(let k=0;k<T;k++){const i=(m*T+k)*3;mp[i]=o.x;mp[i+1]=o.y-k*.12;mp[i+2]=o.z;}}
+ mpObj.geometry.attributes.position.needsUpdate=true;
+ for(let i=0;i<GP;i++){const c=i%GC,r=(i/GC)|0,x=(c/(GC-1)-.5)*24+gj[i*2],z=(r/(GC-1)-.5)*24+gj[i*2+1];gp[i*3]=x;gp[i*3+1]=Math.sin(x*.4+t)*.18+Math.cos(z*.5+t*.8)*.18;gp[i*3+2]=z;}
+ ground.geometry.attributes.position.needsUpdate=true;
+ renderer.render(scene,camera);}
+animate();
+
+function chart(id,fn){const c=document.getElementById(id),x=c.getContext('2d'),W=c.width,H=c.height;x.clearRect(0,0,W,H);x.strokeStyle='rgba(200,212,228,.7)';x.lineWidth=1.1;x.beginPath();for(let i=0;i<W;i++){const v=fn(i/W);const y=H-v*H*.8-H*.1;i?x.lineTo(i,y):x.moveTo(i,y);}x.stroke();}
+chart('w1',u=>Math.abs(Math.sin(u*6.28*2))*.5+.3);
+chart('w2',u=>{let v=0;for(let k=0;k<5;k++)v+=Math.sin((u*6.28)*(k+1)+k)*(0.5/(k+1));return Math.abs(v)});
+chart('w4',u=>Math.abs(Math.sin(u*6.28*3)+Math.sin(u*6.28*7)*.4)*.6);
+chart('w5',u=>{let v=0;for(let k=0;k<7;k++)v+=Math.cos((u*6.28)*(k+1))*(.5/(k+1));return Math.abs(v)*.9});
+chart('w6',u=>Math.abs(Math.sin(u*6.28*2.2))*.4+.2+Math.abs(Math.sin(u*6.28*9))*.3);
+</script>
+</body>
+</html>

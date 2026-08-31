@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Gina 全息控制台 · v2 暗色精密仪表盘</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{width:100vw;height:100vh;overflow:hidden;font-family:'JetBrains Mono','Orbitron',sans-serif;
+    --bg:#0a0b0d;--a:#4dc2ff;--b:#8ec4ff;--accent:#3ddc97;
+    --tx:#e6ebf2;--dim:#8b93a3;--faint:#4a5060;--risk:#ff5c6a;
+    --line:rgba(150,170,200,.16);--line-hi:rgba(150,190,230,.5);
+    --chip:rgba(14,17,22,.72);--chip2:rgba(10,12,16,.8)}
+  canvas#scene{position:fixed;inset:0;display:block;background:var(--bg)}
+  .grid{position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:52px 52px;opacity:.14;mask-image:radial-gradient(circle at 50% 44%,#000 30%,transparent 74%)}
+  .vig{position:fixed;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at 50% 40%,transparent 36%,rgba(6,7,9,.9) 100%)}
+
+  .topbar{position:fixed;top:0;left:0;right:0;height:60px;z-index:5;display:flex;align-items:center;gap:20px;padding:0 30px;background:linear-gradient(to bottom,rgba(8,9,11,.7),transparent)}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand .mk{width:24px;height:24px;display:grid;place-items:center;border:1px solid var(--line-hi)}
+  .brand .mk i{width:7px;height:7px;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+  .brand b{font-family:'Orbitron';font-weight:600;letter-spacing:.3em;font-size:14px;color:var(--tx)}
+  .brand span{font-size:8px;letter-spacing:.24em;color:var(--dim)}
+  .topstatus{margin-left:auto;display:flex;align-items:center;gap:18px;font-size:9px;letter-spacing:.1em}
+  .st{display:flex;align-items:center;gap:7px}
+  .st .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+  .st .lbl{color:var(--dim)} .st b{font-weight:500;color:var(--tx)}
+  .time{font-family:'Orbitron';font-size:14px;letter-spacing:.14em;color:var(--tx)}
+
+  .hud{position:fixed;z-index:4;background:var(--chip);border:1px solid var(--line);padding:13px 15px;min-width:198px}
+  .hud::before{content:'';position:absolute;top:-1px;left:0;width:34px;height:1px;background:var(--line-hi)}
+  .hud-tl{clip-path:polygon(0 0,12px 0,12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%);left:26px;top:80px}
+  .hud-tr{clip-path:polygon(0 0,100% 0,100% 100%,calc(100% - 12px) 100%,14px calc(100% - 12px),14px 0);right:26px;top:80px}
+  .hud-bl{clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%);left:26px;bottom:24px}
+  .hud-br{clip-path:polygon(14px 0,100% 0,100% 100%,0 100%,0 calc(100% - 14px),calc(100% - 14px) calc(100% - 14px));right:26px;bottom:24px}
+  .hud h5{font-size:8.5px;letter-spacing:.24em;color:var(--dim);margin-bottom:11px;display:flex;align-items:center;gap:8px}
+  .hud h5::before{content:'';width:5px;height:5px;background:var(--a);box-shadow:0 0 5px var(--a)}
+  .row{display:flex;justify-content:space-between;gap:14px;font-size:10.5px;margin:6px 0}
+  .row span{color:var(--dim);letter-spacing:.08em} .row b{font-weight:500;letter-spacing:.02em;color:var(--tx)}
+  .row b.a{color:var(--a)} .row b.ac{color:var(--accent)} .row b.rk{color:var(--risk)}
+  .bars{display:flex;gap:3px;margin:7px 0}
+  .bars i{width:6px;height:11px;background:rgba(150,180,220,.1)}
+  .bars i.on{background:var(--a);box-shadow:0 0 5px rgba(90,180,240,.5)}
+
+  .left{position:fixed;left:26px;top:50%;transform:translateY(-50%);width:224px;z-index:4}
+  .right{position:fixed;right:26px;top:50%;transform:translateY(-50%);width:224px;z-index:4}
+  .card{background:var(--chip);border:1px solid var(--line);padding:13px 15px;margin-bottom:12px;position:relative}
+  .card::before{content:'';position:absolute;top:-1px;left:0;width:30px;height:1px;background:var(--line-hi)}
+  .card h5{font-size:8.5px;letter-spacing:.24em;color:var(--dim);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .card h5::before{content:'';width:5px;height:5px;background:var(--accent);box-shadow:0 0 5px var(--accent)}
+  .mood{font-family:'Orbitron';font-size:17px;letter-spacing:.14em;color:var(--tx);margin-bottom:9px}
+  .wave{width:100%;height:34px;display:block;margin-top:4px}
+  .scal{display:flex;justify-content:space-between;font-size:7px;letter-spacing:.14em;color:var(--faint);margin-top:3px}
+  .tlist{display:flex;flex-direction:column;gap:7px}
+  .telem{font-size:9.5px;line-height:1.5;color:var(--dim);border-left:2px solid var(--line);padding:0 0 0 9px}
+  .telem b{color:var(--tx);font-weight:500}
+  .tlstep{display:flex;gap:8px;align-items:flex-start;font-size:9.5px;color:var(--dim);padding:4px 0 4px 9px;border-left:2px solid var(--line)}
+  .tlstep b{color:var(--a);font-weight:600}
+  .tlstep.active{color:var(--tx)}
+  .tlstep.active b{color:var(--accent)}
+
+  .console{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);width:640px;max-width:92%;z-index:5;background:var(--chip2);border:1px solid var(--line)}
+  .console::before{content:'';position:absolute;top:-1px;left:0;width:56px;height:1px;background:var(--line-hi)}
+  .reply{margin:12px 16px 7px;font-size:11px;line-height:1.7;color:var(--tx);min-height:18px}
+  .reply .g{color:var(--a)}
+  .comp{display:flex;align-items:center;gap:8px;border-top:1px solid var(--line);padding:10px 12px}
+  .comp::before{content:'❯';color:var(--accent);font-weight:700;padding-left:3px}
+  .inp{flex:1;background:transparent;border:none;outline:none;color:var(--tx);font:12px 'JetBrains Mono',monospace}
+  .label{font-family:'Orbitron';font-size:8px;letter-spacing:.2em;color:var(--dim);display:flex;gap:10px;align-items:center}
+  .key{color:var(--a)}
+
+  .tag{position:fixed;left:26px;top:26px;z-index:6;font-family:'Orbitron';font-size:9px;letter-spacing:.18em;color:#061015;background:var(--a);padding:5px 12px;clip-path:polygon(6px 0,100% 0,100% 100%,6px 100%,0 50%)}
+</style>
+</head>
+<body>
+<div class="grid"></div>
+<div class="vig"></div>
+<canvas id="scene"></canvas>
+<div class="tag">GINA · PRECISION DASHBOARD</div>
+
+<div class="topbar">
+  <div class="brand"><div class="mk"><i></i></div><div><b>GINA</b><br><span>DIGITAL CONSCIOUSNESS</span></div></div>
+  <div class="topstatus">
+    <div class="st"><span class="dot"></span><span class="lbl">CORE</span><b>ONLINE</b></div>
+    <div class="st"><span class="dot"></span><span class="lbl">LINK</span><b>SSE</b></div>
+    <div class="time">21:47:08</div>
+  </div>
+</div>
+
+<div class="hud hud-tl">
+  <h5>MEMORY // SYSTEM</h5>
+  <div class="row"><span>记忆节点</span><b class="a">12,847</b></div>
+  <div class="row"><span>会话数</span><b>1,204</b></div>
+  <div class="row"><span>焦点线程</span><b>3 ACTIVE</b></div>
+  <div class="row"><span>知识库</span><b class="ac">SEEDED</b></div>
+</div>
+
+<div class="hud hud-tr">
+  <h5>COGNITION // LLM</h5>
+  <div class="row"><span>Provider</span><b class="a">DeepSeek</b></div>
+  <div class="row"><span>Model</span><b>deepseek-v4</b></div>
+  <div class="bars"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+  <div class="row"><span>配额</span><b class="ac">78%</b></div>
+  <div class="row"><span>TICK 心跳</span><b>#4,392</b></div>
+</div>
+
+<div class="hud hud-bl">
+  <h5>NEURAL // MONITOR</h5>
+  <div class="row"><span>意识状态</span><b class="a">THINKING</b></div>
+  <div class="row"><span>认知负荷</span><b>62%</b></div>
+  <div class="row"><span>记忆活跃度</span><b>85%</b></div>
+  <canvas class="wave" id="eeg" width="170" height="28"></canvas>
+</div>
+
+<div class="hud hud-br">
+  <h5>AGENT // ACTIONS</h5>
+  <div class="tlstep active"><b>▸</b> 检索记忆 · 相关度0.87</div>
+  <div class="tlstep active"><b>▸</b> 调用工具 · read_file</div>
+  <div class="tlstep"><b>○</b> 等待 LLM 响应</div>
+  <div class="tlstep"><b>○</b> 生成回复</div>
+</div>
+
+<div class="left">
+  <div class="card">
+    <h5>CONSCIOUSNESS</h5>
+    <div class="mood">THINK</div>
+    <canvas class="wave" id="waveL" width="190" height="32"></canvas>
+    <div class="scal"><span>CALM</span><span style="color:var(--a)">THINK</span><span>SPEAK</span></div>
+  </div>
+  <div class="card">
+    <h5>THOUGHT STREAM</h5>
+    <div class="tlist">
+      <div class="telem"><b>▸</b> 已解析用户意图：查询记忆</div>
+      <div class="telem"><b>▸</b> 关联到「项目B·桌宠」线程</div>
+      <div class="telem"><b>▸</b> 正在检索 3 个相关节点</div>
+    </div>
+  </div>
+</div>
+
+<div class="right">
+  <div class="card">
+    <h5>SYSTEM // STATUS</h5>
+    <div class="row"><span>网络延迟</span><b class="ac">30ms</b></div>
+    <div class="row"><span>CPU 占用</span><b>21%</b></div>
+    <div class="row"><span>核心温度</span><b>38.1°</b></div>
+  </div>
+  <div class="card">
+    <h5>CONTEXT // FEED</h5>
+    <div class="telem"><b>①</b> AI 大模型新突破</div>
+    <div class="telem"><b>②</b> 新能源车销量创新高</div>
+    <div class="telem"><b>③</b> 半导体产业投资升温</div>
+  </div>
+</div>
+
+<div class="console">
+  <div class="reply"><span class="g">GINA ·</span> 正在分析近期记忆… 已确认 3 个相关节点，是否展开记忆拓扑？</div>
+  <div class="comp">
+    <input class="inp" placeholder="向 GINA 下达指令……「查看项目B的最新进展」"/>
+    <div class="label"><span class="key">EXECUTE ▸</span></div>
+  </div>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+
+const A=0x4dc2ff, B=0x8ec4ff, AC=0x3ddc97;
+const canvas=document.getElementById('scene');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.setClearColor(0x0a0b0d,1);
+const scene=new THREE.Scene();
+scene.fog=new THREE.FogExp2(0x0a0b0d,0.014);
+const camera=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,0.1,100);
+camera.position.set(0,0,9);
+
+const root=new THREE.Group();scene.add(root);
+
+// 意识核心引擎 - 精美版 (柔白蓝渐变)
+const coreGeo=new THREE.IcosahedronGeometry(1.5,4);
+const coreMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,side:THREE.FrontSide,
+ uniforms:{uTime:{value:3.1},uA:{value:new THREE.Color(A)},uB:{value:new THREE.Color(B)}},
+ vertexShader:`varying vec3 vN,vV;void main(){vN=normalize(normalMatrix*normal);vec4 mv=modelViewMatrix*vec4(position,1.);vV=normalize(-mv.xyz);gl_Position=projectionMatrix*mv;}`,
+ fragmentShader:`varying vec3 vN,vV;uniform float uTime;uniform vec3 uA,uB;
+ void main(){float fr=pow(1.-abs(dot(normalize(vN),normalize(vV))),2.2);
+ float s1=sin(gl_FragCoord.y*.05+uTime*2.4)*.5+.5,s2=sin(gl_FragCoord.x*.045-uTime*1.7)*.5+.5;
+ float en=(s1+s2)*.5;float a=.10+fr*.66+en*.16;vec3 c=mix(uB,vec3(0.92,0.97,1.0),fr*.6);c+=vec3(uA)*fr*.22+en*.15;
+ gl_FragColor=vec4(c,clamp(a,0.,1.));}`});
+const core=new THREE.Mesh(coreGeo,coreMat);root.add(core);
+
+// 柔光晕
+function glowTex(){const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d').createRadialGradient(64,64,0,64,64,64);g.addColorStop(0,'rgba(220,235,255,0.85)');g.addColorStop(.3,'rgba(150,190,240,0.28)');g.addColorStop(1,'rgba(0,0,0,0)');const x=c.getContext('2d');x.fillStyle=g;x.fillRect(0,0,128,128);return new THREE.CanvasTexture(c)}
+const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex(),color:0xcfe4ff,blending:THREE.AdditiveBlending,depthWrite:false,transparent:true,opacity:.55}));
+glow.scale.set(3.1,3.1,1);core.add(glow);
+
+// 细腻粒子
+const N=9000,pos=new Float32Array(N*3),ga=Math.PI*(3-Math.sqrt(5));
+for(let i=0;i<N;i++){const y=1-(i/(N-1))*2,r=Math.sqrt(1-y*y),t=ga*i,jr=1+(Math.random()-.5)*.06;
+ pos[i*3]=Math.cos(t)*r*1.47*jr;pos[i*3+1]=y*1.47*jr;pos[i*3+2]=Math.sin(t)*r*1.47*jr;}
+const dotG=new THREE.BufferGeometry();dotG.setAttribute('position',new THREE.BufferAttribute(pos,3));
+core.add(new THREE.Points(dotG,new THREE.PointsMaterial({color:0xdceaff,size:.022,transparent:true,opacity:.4,depthWrite:false,blending:THREE.AdditiveBlending})));
+
+// 记忆节点轨道 - 有层次
+const orbitGrp=new THREE.Group();root.add(orbitGrp);
+const orbitMat=new THREE.MeshBasicMaterial({color:B,transparent:true,opacity:.16,depthWrite:false,blending:THREE.AdditiveBlending});
+for(let i=0;i<3;i++){const tor=new THREE.Mesh(new THREE.TorusGeometry(2.5+i*.5,.003,8,180),orbitMat);tor.rotation.x=Math.PI/2+((i-1)*.5);tor.rotation.y=i*.6;orbitGrp.add(tor);}
+const memNodes=[];
+for(let i=0;i<16;i++){const ang=i/16*Math.PI*2,ring=i%3,r=2.5+ring*.5;
+ const x=Math.cos(ang)*r,y=(i%5-2)*.1,z=Math.sin(ang)*r;
+ const s=new THREE.Mesh(new THREE.IcosahedronGeometry(.07,1),new THREE.MeshBasicMaterial({color:i%3===0?AC:(i%2?A:B),transparent:true,opacity:.85}));
+ s.position.set(x,y,z);orbitGrp.add(s);memNodes.push(s);}
+const connMat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.09,depthWrite:false,blending:THREE.AdditiveBlending});
+for(let i=0;i<memNodes.length;i++){const n1=memNodes[i],n2=memNodes[(i+3)%memNodes.length];
+ const d=n2.position.clone().sub(n1.position),len=d.length();
+ const cyl=new THREE.Mesh(new THREE.CylinderGeometry(.0025,.0025,len,4),connMat);
+ cyl.position.copy(n1.position).add(d.clone().multiplyScalar(.5));
+ cyl.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());
+ orbitGrp.add(cyl);}
+
+// 线框外壳
+scene.add(new THREE.Mesh(new THREE.IcosahedronGeometry(3.5,2),new THREE.MeshBasicMaterial({color:B,wireframe:true,transparent:true,opacity:.07,depthWrite:false,blending:THREE.AdditiveBlending})));
+
+// 卫星
+const satGrp=new THREE.Group();satGrp.rotation.z=.35;scene.add(satGrp);
+const sats=[];
+[3.9,4.6,5.3].forEach((r,i)=>{const o=new THREE.Mesh(new THREE.TorusGeometry(r,.004,8,180),new THREE.MeshBasicMaterial({color:B,transparent:true,opacity:.22,depthWrite:false,blending:THREE.AdditiveBlending}));o.rotation.x=Math.PI/2;
+ const g=new THREE.Group();g.rotation.x=Math.PI/2+(i-1)*.5;g.add(o);
+ const sp=new THREE.Mesh(new THREE.SphereGeometry(.055,8,8),new THREE.MeshBasicMaterial({color:0xeff6ff,transparent:true,opacity:.9}));sp.position.set(r,0,0);g.add(sp);satGrp.add(g);sats.push({sp,r});});
+
+// 流星
+const M=54,T=10,mp=new Float32Array(M*T*3),mt=new Float32Array(M*T),met=[];
+for(let m=0;m<M;m++){met.push({x:(Math.random()-.5)*22,z:(Math.random()-.5)*22,y:-4+Math.random()*5,sp:.02+Math.random()*.04});for(let k=0;k<T;k++)mt[m*T+k]=k/(T-1);}
+const mgeo=new THREE.BufferGeometry();mgeo.setAttribute('position',new THREE.BufferAttribute(mp,3));mgeo.setAttribute('aT',new THREE.BufferAttribute(mt,1));
+const mmat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+ vertexShader:`attribute float aT;varying float vT;void main(){vT=aT;vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=(1.-vT)*4.+1.2;gl_Position=projectionMatrix*mv;}`,
+ fragmentShader:`varying float vT;void main(){float d=length(gl_PointCoord-vec2(.5));if(d>.5)discard;gl_FragColor=vec4(vec3(.78,.86,1.),(1.-vT)*.6*(1.-smoothstep(0.,.5,d)));}`});
+const mpObj=new THREE.Points(mgeo,mmat);scene.add(mpObj);
+
+// 波浪地面
+const GC=100,GP=GC*GC,gp=new Float32Array(GP*3),gj=new Float32Array(GP*2);
+for(let i=0;i<GP;i++){gj[i*2]=(Math.random()-.5)*.08;gj[i*2+1]=(Math.random()-.5)*.08;}
+const ggeo=new THREE.BufferGeometry();ggeo.setAttribute('position',new THREE.BufferAttribute(gp,3));
+const ground=new THREE.Points(ggeo,new THREE.PointsMaterial({color:0x9fb4d8,size:.06,map:glowTex(),transparent:true,opacity:.3,depthWrite:false,blending:THREE.AdditiveBlending}));ground.position.y=-4.1;scene.add(ground);
+
+// 定格渲染
+const t=3.1;
+core.rotation.y=t*.2;coreMat.uniforms.uTime.value=t;
+core.scale.setScalar(1+Math.sin(t*1.2)*.05);
+glow.scale.setScalar(3.1*(1+Math.sin(t*1.35)*.13));
+orbitGrp.rotation.y=t*.12;
+for(const s of sats){const a=t*.26;s.sp.position.set(Math.cos(a)*s.r,0,Math.sin(a)*s.r);}
+for(let m=0;m<M;m++){const o=met[m];o.y=(o.y+t*o.sp)%5;if(o.y>3)o.y-=7;for(let k=0;k<T;k++){const i=(m*T+k)*3;mp[i]=o.x;mp[i+1]=o.y-k*.12;mp[i+2]=o.z;}}
+mpObj.geometry.attributes.position.needsUpdate=true;
+for(let i=0;i<GP;i++){const c=i%GC,r=(i/GC)|0,x=(c/(GC-1)-.5)*24+gj[i*2],z=(r/(GC-1)-.5)*24+gj[i*2+1];gp[i*3]=x;gp[i*3+1]=Math.sin(x*.4+t)*.18+Math.cos(z*.5+t*.8)*.18;gp[i*3+2]=z;}
+ground.geometry.attributes.position.needsUpdate=true;
+renderer.render(scene,camera);
+
+function eeg(id,freq,amp,col){const c=document.getElementById(id),x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);x.beginPath();x.strokeStyle=col;x.lineWidth=1.3;for(let i=0;i<c.width;i++){const tt=i/c.width*Math.PI*2*(freq||3);const v=Math.sin(tt)*(amp||.4)+Math.sin(tt*3)*.2+Math.sin(tt*7)*.1;const y=c.height/2+v*c.height*.36;i?x.lineTo(i,y):x.moveTo(i,y);}x.stroke();}
+eeg('waveL',3,.5,'#4dc2ff');
+eeg('eeg',2,.45,'#4dc2ff');
+</script>
+</body>
+</html>

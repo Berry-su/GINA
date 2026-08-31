@@ -179,3 +179,11 @@ _tmp_*
 *.mp3
 *.wav
 *.gif
+
+# IDE / AI 工具配置（不入仓）
+.opencode/
+.trae/
+.trae-cn/
+.cursor/
+.copilot/
+.aider*

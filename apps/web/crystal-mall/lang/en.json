@@ -1,0 +1,134 @@
+{
+  "brand": "ZICHEN·RUNELITH",
+  "brand_cn": "紫宸石箓",
+  "slogan": "Where crystals find their light",
+  "slogan_cn": "山有灵，晶有光",
+
+  "nav": {
+    "home": "Home",
+    "gina": "GINA",
+    "diy": "Design",
+    "cart": "Cart",
+    "profile": "Account"
+  },
+
+  "home": {
+    "start_journey": "Begin Your Crystal Journey",
+    "categories": "Categories",
+    "hot_picks": "Popular Now",
+    "ask_gina": "Ask GINA",
+    "gina_desc": "Tell me your wish, find the perfect crystal",
+    "community": "Private Community",
+    "community_desc": "Connect with fellow crystal lovers",
+    "view_all": "View All"
+  },
+
+  "categories": {
+    "love": "Love & Romance",
+    "wealth": "Wealth & Prosperity",
+    "career": "Career & Success",
+    "health": "Health & Wellness",
+    "sleep": "Sleep & Peace",
+    "protect": "Protection",
+    "study": "Focus & Wisdom",
+    "popular": "Trending"
+  },
+
+  "diy": {
+    "title": "Design Your Own Bracelet",
+    "wrist_size": "Wrist Size",
+    "bead_count": "Beads",
+    "price": "Price",
+    "style_single": "Single Loop",
+    "style_double": "Double Loop",
+    "style_108": "108 Beads",
+    "bead_crystal": "Crystals",
+    "bead_accessory": "Accessories",
+    "bead_freeform": "Freeform",
+    "size_priority": "Bead Size",
+    "all": "All",
+    "finish_design": "Complete Design",
+    "random_inspo": "Inspiration Box",
+    "view_inspo": "Browse Inspiration",
+    "birthday_elements": "Birthday Elements",
+    "tools": "Design Tools",
+    "advanced": "Advanced Matching",
+    "add_to_cart": "Add to Cart",
+    "save_design": "Save Design",
+    "share_gallery": "Share to Gallery",
+    "continue_edit": "Keep Editing",
+    "tutorial_title": "First time designing?",
+    "tutorial_desc": "Learn wrist sizing, bead selection, and design in 1 minute.",
+    "tutorial_start": "Start Tutorial",
+    "tutorial_skip": "Try It Myself"
+  },
+
+  "ai": {
+    "title": "GINA",
+    "greeting": "Hi, I'm GINA",
+    "subtitle": "Your crystal companion",
+    "desc": "Based on your needs, I'll help you design the perfect bracelet. Clear aesthetic guidance, easy to shop.",
+    "birthday_input": "Enter birthday for personalized recommendations",
+    "placeholder": "Tell me what you're looking for...",
+    "disclaimer": "AI-generated content for reference only",
+    "quick_love": "Love & Romance",
+    "quick_wealth": "Wealth & Prosperity",
+    "quick_career": "Career & Success",
+    "quick_trending": "Popular Designs"
+  },
+
+  "product": {
+    "add_to_cart": "Add to Cart",
+    "buy_now": "Buy Now",
+    "description": "Description",
+    "details": "Details",
+    "reviews": "Reviews",
+    "related": "You May Also Like",
+    "in_stock": "In Stock",
+    "out_of_stock": "Out of Stock",
+    "free_shipping": "Free Shipping"
+  },
+
+  "cart": {
+    "title": "Shopping Cart",
+    "empty": "Your cart is empty",
+    "empty_desc": "Discover something you love",
+    "subtotal": "Subtotal",
+    "checkout": "Proceed to Checkout",
+    "remove": "Remove",
+    "select_all": "Select All",
+    "clear_all": "Clear All"
+  },
+
+  "checkout": {
+    "title": "Checkout",
+    "shipping": "Shipping Address",
+    "payment": "Payment Method",
+    "summary": "Order Summary",
+    "place_order": "Place Order",
+    "card": "Credit/Debit Card",
+    "paypal": "PayPal"
+  },
+
+  "profile": {
+    "title": "My Account",
+    "orders": "My Orders",
+    "diy_works": "My Designs",
+    "favorites": "Favorites",
+    "addresses": "Addresses",
+    "settings": "Settings"
+  },
+
+  "common": {
+    "currency": "$",
+    "loading": "Loading...",
+    "back": "Back",
+    "close": "Close",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "search": "Search crystals...",
+    "no_results": "No results found"
+  }
+}
