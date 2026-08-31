@@ -6,7 +6,7 @@
   "description": "Gina — a digital companion running on your machine",
   "main": "electron/main.cjs",
   "author": {
-    "name": "xiaoyuanda666-ship-it"
+    "name": "gina"
   },
   "scripts": {
     "test": "node src/cats_net/selftest.js && node src/analysts/selftest.js && node scripts/verify-startup.mjs",
@@ -100,7 +100,7 @@
     "electron-rebuild": "^3.2.9"
   },
   "build": {
-    "appId": "com.xiaoyuanda.gina",
+    "appId": "com.berrysu.gina",
     "productName": "Gina",
     "artifactName": "${productName}-Setup-${version}.${ext}",
     "npmRebuild": false,
@@ -218,7 +218,7 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "xiaoyuanda666-ship-it",
+        "owner": "berrysu",
         "repo": "BaiLongma",
         "releaseType": "release"
       }

@@ -187,3 +187,19 @@ _tmp_*
 .cursor/
 .copilot/
 .aider*
+
+# 编译产物（不应 commit）
+build/
+*.o
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Runtime trace（运行时数据，体积大）
+data/turn-traces.jsonl
+data/turn-traces*.jsonl
+
+# 备份文件
+*.bak
+*.bak.*

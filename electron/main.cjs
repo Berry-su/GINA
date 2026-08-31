@@ -41,7 +41,7 @@ globalThis.ginaSystemPreferences = systemPreferences
 const IS_DEV = !app.isPackaged
 const NETWORK_DIAGNOSTICS_ENABLED = IS_DEV || process.env.GINA_NETWORK_DIAGNOSTICS === '1'
 configurePackagedPlaywright({ isPackaged: !IS_DEV })
-const WINDOWS_APP_USER_MODEL_ID = 'com.xiaoyuanda.gina'
+const WINDOWS_APP_USER_MODEL_ID = 'com.berrysu.gina'
 const WINDOWS_TITLE_BAR_HEIGHT = 38
 const WINDOWS_TITLE_BAR_THEMES = Object.freeze({
   startup: { color: '#0b0d10', symbolColor: '#e7edf3' },
