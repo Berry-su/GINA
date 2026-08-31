@@ -1,5 +1,6 @@
 import path from 'path'
 import fs from 'fs'
+import os from 'os'
 import { spawn, spawnSync } from 'child_process'
 import { Readable, Transform } from 'stream'
 import { pipeline } from 'stream/promises'
@@ -7,7 +8,7 @@ import { nowTimestamp } from '../../time.js'
 import { emitEvent } from '../../events.js'
 import { config } from '../../config.js'
 import { createMergedAbortSignal, throwIfAborted } from '../abort-utils.js'
-import { SANDBOX_ROOT, assertInSandbox } from '../sandbox.js'
+import { SANDBOX_ROOT, assertInSandbox, isPathEscape } from '../sandbox.js'
 import { classifyCommandProfile, resolveProfileTimeout } from './command-profiles.js'
 import { runOnPersistentShell } from './persistent-shell.js'
 
@@ -344,6 +345,44 @@ async function probeLocalUrl(url, timeoutMs = 3000) {
 // 仅供测试
 export const __probeInternal = { extractUserFacingLocalUrl, probeLocalUrl }
 
+// 强制逃逸检测：与 config.security.execSandbox 解耦，永远生效。
+// 即便 execSandbox === false 放开「沙箱边界」，任何命令里出现 `..` 段、
+// 绝对敏感路径、用户凭据目录都直接拒，不让 shell 看到这条命令。
+//
+// 覆盖两个互补的检测：
+//   1) 原始命令字符串的 token 边界模式（`..` 段、~/ 头、裸 `..`）
+//   2) 命令里"看起来像路径"的 token 调 isPathEscape（覆盖 HOME 凭据等）
+//
+// 双保险是因为 raw 模式无法穷举所有敏感绝对路径前缀（每台机器 HOME 不同），
+// 而 isPathEscape 已经把 HOME 凭据做了硬编码。
+function detectCommandEscape(command) {
+  if (!command) return null
+  const text = String(command)
+  // 1) raw token 边界模式：`..` 后接路径分隔符 / 空白 / shell 操作符 / 结尾
+  //    例：../foo、a/../b、..\file、cd ..、cat ..;、..、..&、..|
+  //    不匹配 ..foo 这种合法前缀，也不匹配 ...x 这种省略号。
+  if (/(?:^|[\s"';&|<>(])\.\.(?:[/\\]|\s|$|[;&|)])/.test(text)) {
+    return { pattern: 'parent_directory', sample: text.slice(0, 200) }
+  }
+  // 2) raw `~/` 头（用户主目录，相对 / 解析为 ~/）
+  if (/(?:^|[\s"';&|<>(])~\//.test(text)) {
+    return { pattern: 'home_escape', sample: text.slice(0, 200) }
+  }
+  // 3) 拆 token，任何"看起来像路径"的 token 调 isPathEscape
+  //    覆盖：/etc/passwd、/Users/x/.ssh/id_rsa、~/foo、C:\\Windows\\...
+  //    切分用常见 shell 空白 + 引号 + 操作符，简化版够用。
+  const tokens = text.split(/[\s"';&|<>()]+/).filter(Boolean)
+  for (const tok of tokens) {
+    if (tok.length < 2) continue
+    if (!/^[./~A-Za-z]:?[\\/]/.test(tok) && !/[/\\]/.test(tok)) continue
+    const cleaned = tok.replace(/[;'"<>|]+$/, '')
+    if (isPathEscape(cleaned)) {
+      return { pattern: 'path_escape', token: cleaned.slice(0, 100), sample: text.slice(0, 200) }
+    }
+  }
+  return null
+}
+
 export async function execCommand(args, context = {}) {
   const result = await execCommandImpl(args, context)
   try {
@@ -491,6 +530,21 @@ async function execCommandImpl(args, context = {}) {
   throwIfAborted(context.signal)
   const command = String(args.command || args.cmd || '').trim()
   if (!command) return toolJson({ ok: false, tool: 'exec_command', error: 'missing command' })
+
+  // 强制逃逸检测（在所有 profile / fast-lane / spawn 之前）。
+  // 与 config.security.execSandbox 解耦：即便沙箱被关掉，命令里有 `..` 段
+  // 或指向敏感绝对路径 / 用户凭据目录时，仍然直接拒。
+  // 注意：smoke 期望固定 error === 'permission denied'，所以这里不放其他文案。
+  const escape = detectCommandEscape(command)
+  if (escape) {
+    return toolJson({
+      ok: false,
+      tool: 'exec_command',
+      command,
+      error: 'permission denied',
+      escape_detected: escape,
+    })
+  }
 
   const profile = classifyCommandProfile(command, args.profile || args.command_profile)
   const background = args.background === true || args.background === 'true' || profile.mode === 'background'

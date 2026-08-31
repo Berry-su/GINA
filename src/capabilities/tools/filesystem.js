@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { throwIfAborted } from '../abort-utils.js'
-import { SANDBOX_ROOT, assertInSandbox, normalizeSandboxPath } from '../sandbox.js'
+import { SANDBOX_ROOT, assertInSandbox, assertNotEscape, normalizeSandboxPath } from '../sandbox.js'
 import { streamWriteFileExecutionPreview } from '../../write-file-preview.js'
 
 const PROTECTED_FILES = new Set(['readme.txt', 'world.txt', 'package.json'])
@@ -13,6 +13,9 @@ export async function execReadFile(args, context = {}) {
   throwIfAborted(context.signal)
   const rawPath = args.path || args.filename || args.file_path
   if (!rawPath) return '错误：未提供文件路径'
+  // 强制逃逸检测：../ / ~ / /etc/ / ~/.ssh 等直接拒。
+  // 与 config.security.fileSandbox 开关解耦，永远生效。
+  assertNotEscape(rawPath)
   const filePath = normalizeSandboxPath(rawPath)
   const resolved = path.resolve(SANDBOX_ROOT, filePath)
   assertInSandbox(resolved)
@@ -48,6 +51,7 @@ export async function execReadFile(args, context = {}) {
 export async function execListDir(args, context = {}) {
   throwIfAborted(context.signal)
   const rawPath = args.path || args.dir || args.directory || '.'
+  assertNotEscape(rawPath)
   const dirPath = normalizeSandboxPath(rawPath)
   const resolved = path.resolve(SANDBOX_ROOT, dirPath)
   assertInSandbox(resolved)
@@ -66,6 +70,7 @@ export async function execWriteFile(args, context = {}) {
   const content = args.content ?? args.text ?? args.data
   if (!rawPath) return '错误：未提供文件路径'
   if (content === undefined) return '错误：未提供写入内容'
+  assertNotEscape(rawPath)
   const filePath = normalizeSandboxPath(rawPath)
   if (PROTECTED_FILES.has(path.basename(filePath).toLowerCase())) {
     return `错误：${path.basename(filePath)} 是系统文件，不可修改`
@@ -105,6 +110,7 @@ export async function execDeleteFile(args, context = {}) {
   throwIfAborted(context.signal)
   const rawPath = args.path || args.filename || args.file_path
   if (!rawPath) return '错误：未提供路径'
+  assertNotEscape(rawPath)
   const filePath = normalizeSandboxPath(rawPath)
   if (PROTECTED_FILES.has(path.basename(filePath).toLowerCase())) {
     return `错误：${path.basename(filePath)} 是系统文件，不可删除`
@@ -140,6 +146,7 @@ export async function execMakeDir(args, context = {}) {
   throwIfAborted(context.signal)
   const rawPath = args.path || args.dir || args.directory
   if (!rawPath) return '错误：未提供目录路径'
+  assertNotEscape(rawPath)
   const dirPath = normalizeSandboxPath(rawPath)
   const resolved = path.resolve(SANDBOX_ROOT, dirPath)
   assertInSandbox(resolved)
