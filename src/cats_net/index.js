@@ -1,7 +1,7 @@
 /**
  * CATS-Net 抽象空间内核 —— 统一导出入口
  *
- * 供上层业务模块（记忆系统、状态机、MCP、交易、SOS 等）引用。
+ * 供上层业务模块（记忆系统、状态机、MCP、交易、SOS 等后续模块）引用。
  */
 
 export { CatsNet } from './cats-net.js'
