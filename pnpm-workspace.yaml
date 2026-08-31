@@ -1,0 +1,7 @@
+packages:
+  - '.'
+
+# 备注（架构师）：
+# gina-cats-net 作为 file: 软依赖，不在此 workspace 数组内（独立仓、独立 git remote）。
+# 主仓通过 `"@berrysu/gina-core": "file:../gina-cats-net"` 引用即可。
+# 详细：ADR-20260831-CATS-NET-软分层方案 §3.3.1

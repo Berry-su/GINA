@@ -8,6 +8,8 @@
   "author": {
     "name": "gina"
   },
+  "packageManager": "pnpm@10.34.5",
+  "workspaces": [],
   "scripts": {
     "test": "node src/cats_net/selftest.js && node src/analysts/selftest.js && node scripts/verify-startup.mjs",
     "start": "electron .",
@@ -69,9 +71,13 @@
     "smoke:tool-factory-web": "node scripts/smoke-tool-factory-web-e2e.mjs",
     "smoke:brain-ui": "node scripts/smoke-brain-ui.mjs",
     "smoke:social": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$env:ELECTRON_RUN_AS_NODE='1'; .\\node_modules\\.bin\\electron.cmd .\\scripts\\smoke-social.mjs\"",
-    "smoke:feishu-ws": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$env:ELECTRON_RUN_AS_NODE='1'; .\\node_modules\\.bin\\electron.cmd .\\scripts\\smoke-feishu-ws.mjs\""
+    "smoke:feishu-ws": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$env:ELECTRON_RUN_AS_NODE='1'; .\\node_modules\\.bin\\electron.cmd .\\scripts\\smoke-feishu-ws.mjs\"",
+    "core:link": "pnpm link --global @berrysu/gina-core",
+    "core:upgrade": "cd ../gina-cats-net && git pull && cd - && pnpm install",
+    "core:check-order": "bash scripts/check-core-comes-first.sh"
   },
   "dependencies": {
+    "@berrysu/gina-core": "file:/Users/ahs/Desktop/GINA/gina增加计划登记",
     "@huggingface/transformers": "^3.0.0",
     "@larksuiteoapi/node-sdk": "^1.68.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
