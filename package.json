@@ -10,6 +10,16 @@
   },
   "packageManager": "pnpm@10.34.5",
   "workspaces": [],
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "electron",
+      "lzma-native",
+      "onnxruntime-node",
+      "protobufjs",
+      "sharp"
+    ]
+  },
   "scripts": {
     "test": "node src/cats_net/selftest.js && node src/analysts/selftest.js && node scripts/verify-startup.mjs",
     "start": "electron .",

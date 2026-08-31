@@ -1,5 +1,7 @@
 packages:
   - '.'
+allowBuilds:
+  better-sqlite3: true
 
 # 备注（架构师）：
 # gina-cats-net 作为 file: 软依赖，不在此 workspace 数组内（独立仓、独立 git remote）。
