@@ -2,10 +2,12 @@
 //
 // Run: node src/test-c4-integration.js
 // 验证：注入位置正确 / 情绪隔离 / 段格式 / 与 emotion 共存
+// C-4.3（2026-09-01 续篇）：emotional-state 段位置 + 隔离
 
 import { buildContextBlock } from './prompt.js'
 import { SelfModel, resetSelfModelForTest } from './self/model.js'
 import { DirectionController } from './learning/direction.js'
+import { JoyState, resetJoyStateForTest } from './emotion/joy-state.js'
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
@@ -180,6 +182,55 @@ section('10. SelfModel tick + buildContextBlock')
   // 置信度受失败影响
   const modelBlock = ctx.match(/<self-model>[\s\S]*?<\/self-model>/)?.[0]
   assert(modelBlock && modelBlock.includes('置信度: 4'), '置信度 < 50% (失败一次: 0.5*0.9=0.45 → 45%)')
+}
+
+console.log(`\n=== C-4 集成测试结果: ${passed} passed, ${failed} failed ===`)
+
+// —— 11. C-4.3 emotional-state 段位置 ——
+// 顺序：self-snapshot → self-model → emotional-state → current-direction → self-perception
+section('11. C-4.3 emotional-state 段位置（紧跟 self-model 之后）')
+{
+  resetJoyStateForTest()
+  const joy = new JoyState()
+  joy.bump({ amount: 0.15, reason: 'integration_test' })
+  const ctx = buildContextBlock({
+    selfSnapshot: { snapshotText: '你刚才在用简洁直接的语气' },
+    selfModel: { text: '## 自主意识' },
+    emotionalState: joy.injectFor(),
+    currentDirection: '## 当前学习方向',
+    selfPerception: { perceptionText: '你感知到镜像污染', boundaryState: 'normal' },
+  })
+  // 段存在
+  assert(ctx.includes('<emotional-state>'), '包含 <emotional-state> 段')
+  assert(ctx.includes('</emotional-state>'), '包含 </emotional-state> 闭合')
+  assert(ctx.includes('joy:'), 'emotionalState 含 joy: 字段')
+  // 位置：self-model 之后、current-direction 之前
+  const modelIdx = ctx.indexOf('</self-model>')
+  const emotionIdx = ctx.indexOf('<emotional-state>')
+  const dirIdx = ctx.indexOf('<current-direction>')
+  assert(modelIdx > 0 && emotionIdx > modelIdx, 'emotional-state 在 self-model 之后')
+  assert(emotionIdx > 0 && dirIdx > emotionIdx, 'emotional-state 在 current-direction 之前')
+}
+
+// —— 12. C-4.3 emotional-state 不混入 self-model / current-direction 段 ——
+section('12. C-4.3 emotional-state 段内不混入其他情绪词')
+{
+  resetJoyStateForTest()
+  const joy = new JoyState()
+  const ctx = buildContextBlock({
+    selfModel: { text: '## 自主意识' },
+    emotionalState: joy.injectFor(),
+    currentDirection: '## 当前学习方向',
+  })
+  const emotionBlock = ctx.match(/<emotional-state>[\s\S]*?<\/emotional-state>/)?.[0]
+  assert(emotionBlock && !emotionBlock.includes('anger'), 'emotional-state 不含 anger')
+  assert(emotionBlock && !emotionBlock.includes('fear'), 'emotional-state 不含 fear')
+  assert(emotionBlock && !emotionBlock.includes('sadness'), 'emotional-state 不含 sadness')
+  assert(emotionBlock && !emotionBlock.includes('valence'), 'emotional-state 不含 valence')
+  assert(emotionBlock && !emotionBlock.includes('arousal'), 'emotional-state 不含 arousal')
+  // self-model 段也不应有 emotional-state 内容
+  const modelBlock = ctx.match(/<self-model>[\s\S]*?<\/self-model>/)?.[0]
+  assert(modelBlock && !modelBlock.includes('joy:'), 'self-model 不含 joy: 字段')
 }
 
 console.log(`\n=== C-4 集成测试结果: ${passed} passed, ${failed} failed ===`)

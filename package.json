@@ -21,9 +21,13 @@
     ]
   },
   "scripts": {
-    "test": "node src/cats_net/selftest.js && node src/analysts/selftest.js && node scripts/verify-startup.mjs && node src/self/test-model.js && node src/learning/test-direction.js && node src/test-c4-integration.js",
+    "test": "node src/cats_net/selftest.js && node src/analysts/selftest.js && node scripts/verify-startup.mjs && node src/self/test-model.js && node src/learning/test-direction.js && node src/test-c4-integration.js && node tests/emotion-isolation.test.js && node src/emotion/test-joy.js && node src/experience/test-experience.js && node src/knowledge/ingestion/test-ingestion-pipeline.js",
     "test:self-model": "node src/self/test-model.js",
     "test:direction": "node src/learning/test-direction.js",
+    "test:joy": "node src/emotion/test-joy.js",
+    "test:joy-isolation": "node tests/emotion-isolation.test.js",
+    "test:experience": "node src/experience/test-experience.js",
+    "test:ingestion": "node src/knowledge/ingestion/test-ingestion-pipeline.js",
     "test:c4": "node src/test-c4-integration.js",
     "start": "electron .",
     "start:lan": "powershell -ExecutionPolicy Bypass -File scripts/start-lan.ps1 app",
@@ -98,6 +102,7 @@
     "better-sqlite3": "^12.11.1",
     "d3": "^7.9.0",
     "electron-updater": "^6.3.9",
+    "epub": "^2.1.1",
     "mammoth": "^1.12.0",
     "node-forge": "^1.4.0",
     "openai": "^6.34.0",

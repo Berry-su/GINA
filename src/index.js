@@ -80,6 +80,10 @@ import { scheduleSceneSurfaceRemoval } from './scene/transient-surfaces.js'
 import { createAwakeningManager } from './awakening.js'
 import { createTaskManager } from './task-manager.js'
 import { createEnvironmentSensor, formatEnvironmentSample } from './environment-sensor.js'
+// C-4.3 joy emotion（2026-09-01 续篇）—— GINA 自身工作满意度
+//   只 joy 一个维度，meta-info 段
+//   接入点：任务完成 / 用户认可 / 决策被采纳（fire-and-forget，不阻塞主循环）
+import { getJoyState } from './emotion/joy-state.js'
 
 function reportStartupProgress(id, status, detail, message) {
   try {
@@ -482,8 +486,25 @@ function buildToolContextForProcess(msg, injection, turnId = '') {
     // 计划做对照，看"声称完成"与每步证据是否一致。只读快照，不可被主 Agent 改写。
     getTaskState: () => ({ task: state.task, steps: state.taskSteps }),
     onSetTask: taskManager.setTask,
-    onCompleteTask: taskManager.completeTask,
-    onUpdateTaskStep: taskManager.updateTaskStep,
+    onCompleteTask: (summary) => {
+      // C-4.3 joy emotion：任务完成时 +0.2
+      //   fire-and-forget 写 joy 表（不阻塞任务完成回调）
+      try {
+        const joy = getJoyState()
+        joy.bump({ amount: 0.2, reason: 'task_success', context: { summary: String(summary || '').slice(0, 60) } })
+      } catch {}
+      return taskManager.completeTask(summary)
+    },
+    onUpdateTaskStep: (idx, status, note) => {
+      // C-4.3 joy emotion：步骤失败时 -0.05（小步调，避免大波动）
+      if (status === 'failed') {
+        try {
+          const joy = getJoyState()
+          joy.bump({ amount: -0.05, reason: 'step_failed', context: { idx, status } })
+        } catch {}
+      }
+      return taskManager.updateTaskStep(idx, status, note)
+    },
 
     startupSelfCheck: state.startupSelfCheck,
     onCompleteStartupSelfCheck: awakeningManager.completeStartupSelfCheck,
@@ -1245,6 +1266,8 @@ async function runTurn(input, label, msg = null) {
       //   meta-info 段，跟 emotion 一样严格隔离（不进 LLM tool/决策调用链路）
       selfModel: injection.selfModel || null,
       currentDirection: injection.currentDirection || null,
+      // C-4.3 joy emotion（2026-09-01 续篇）—— 只 joy 一个维度，meta-info 段
+      emotionalState: injection.emotionalState || null,
       environmentSample: (() => { try { return formatEnvironmentSample(environmentSensor.senseSync()); } catch { return ''; } })(),
     }
 
@@ -1724,6 +1747,11 @@ async function runTurn(input, label, msg = null) {
     taskManager.setTaskFromMarker(markers.setTask)
   }
   if (markers.clearTask) {
+    // C-4.3 joy emotion：[CLEAR_TASK] 标记触发任务完成，+0.2
+    try {
+      const joy = getJoyState()
+      joy.bump({ amount: 0.2, reason: 'task_success_marker' })
+    } catch {}
     taskManager.clearTaskFromMarker()
   }
 

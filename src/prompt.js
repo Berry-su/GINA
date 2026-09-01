@@ -659,6 +659,10 @@ export function buildContextBlock({
   // 当前学习方向（direction · C-4.2 2026-09-01）：对话触发的方向控制器输出
   //   - meta-info 段（不参与 tool/决策调用）
   currentDirection = null,
+  // 情绪状态（emotional-state · C-4.3 2026-09-01）：只 joy 一个维度
+  //   - meta-info 段（严格不进 tool/决策调用，emotion-isolation.test.js 7 断言每 PR 必跑）
+  //   - 位置：紧跟 self-model 之后、current-direction 之前
+  emotionalState = null,
 } = {}) {
   const sections = []
 
@@ -714,6 +718,16 @@ export function buildContextBlock({
   // meta-info 段：跟 emotion 一样位置，**严格不进** buildSystemPrompt，不进 LLM tool/决策调用链路
   if (selfModel?.text) {
     sections.push(`<self-model>\n${selfModel.text}\n</self-model>`)
+  }
+
+  // <emotional-state> —— 情绪状态（C-4.3 · 2026-09-01 续篇）
+  //
+  // 只 joy 一个维度，0-1 浮点。
+  // meta-info 段：GINA 自身工作满意度，**严格不进** tool/决策调用。
+  // 位置：紧跟 self-model 之后、current-direction 之前。
+  // 隔离验证：emotion-isolation.test.js 7 断言每 PR 必跑。
+  if (emotionalState) {
+    sections.push(`<emotional-state>\n${emotionalState}\n</emotional-state>`)
   }
 
   // <current-direction> —— 当前学习方向（C-4.2 · 2026-09-01）

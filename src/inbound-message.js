@@ -6,6 +6,13 @@ import { enqueueMessage } from './queue.js'
 //   「接下来你主攻 X」等表达 → 自动落 data/direction.json
 //   LLM 兜底异步跑（不阻塞 pushMessage 主路径）
 import { getDirectionController } from './learning/direction.js'
+// C-4.3 joy emotion（2026-09-01 续篇）—— 用户认可 / 否决时调 joy.bump
+import { getJoyState } from './emotion/joy-state.js'
+
+// 老板认可关键词（中英双语，与 emotion-engine.js 关键词去重）
+const APPROVAL_RE = /(对|很好|不错|OK|ok|确认|赞|同意|完美|棒|good|nice|great|yes|approved|agreed|👍|✅|✓)/i
+// 老板否决关键词
+const REJECTION_RE = /(取消|撤回|不要|不行|错了|错|fail|wrong|error|cancel|reject|no|不|🙅|❌|✗)/i
 
 const PRIORITY = {
   user: 100,
@@ -74,6 +81,25 @@ export function pushMessage(rawFromId, content, channel = 'TUI', meta = {}) {
       }
     } catch {
       // 方向检测失败不应阻塞消息入队
+    }
+
+    // C-4.3 joy emotion：用户认可 / 否决时调 joy.bump
+    //   老板认可（命中 APPROVAL_RE）→ +0.1
+    //   老板否决（命中 REJECTION_RE 但非认可）→ -0.3
+    //   fire-and-forget 写 joy 表（不阻塞消息入队）
+    if (meta?.joyDetect !== false) {
+      try {
+        const text = String(content || '')
+        const isApproval = APPROVAL_RE.test(text)
+        const isRejection = !isApproval && REJECTION_RE.test(text)
+        if (isApproval) {
+          getJoyState().bump({ amount: 0.1, reason: 'user_approval', context: { snippet: text.slice(0, 60) } })
+        } else if (isRejection) {
+          getJoyState().bump({ amount: -0.3, reason: 'user_reject', context: { snippet: text.slice(0, 60) } })
+        }
+      } catch {
+        // joy 检测失败不应阻塞消息入队
+      }
     }
   }
 

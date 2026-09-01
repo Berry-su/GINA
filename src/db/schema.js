@@ -629,5 +629,52 @@ export function initializeSchema(db) {
 
   // media_library 表已在上方定义，这里确保 music_lrc 列存在
   try { db.exec(`ALTER TABLE music_library ADD COLUMN lrc TEXT NOT NULL DEFAULT ''`) } catch {}
+
+  // emotion_joy 表：C-4.3 joy 情绪（单例 row, id=1）
+  //   老板 2026-09-01 拍板：只 joy 一个维度，0-1 浮点，严格不进决策路径
+  //   持久化：SQLite 单例表（区别于 emotion-engine.js 的 KV 持久化 emotion_engine_state_v1）
+  //   关联 ADR-004 §3.1
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS emotion_joy (
+      id           INTEGER PRIMARY KEY CHECK (id = 1),
+      value        REAL    NOT NULL DEFAULT 0.5,
+      version      INTEGER NOT NULL DEFAULT 1,
+      last_bump_at TEXT    NOT NULL DEFAULT (datetime('now')),
+      last_reason  TEXT    NOT NULL DEFAULT '',
+      bump_count   INTEGER NOT NULL DEFAULT 0,
+      updated_at   TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    INSERT OR IGNORE INTO emotion_joy (id, value, last_bump_at, last_reason, bump_count)
+      VALUES (1, 0.5, datetime('now'), 'init', 0);
+  `)
+
+  // experience 表：C-4.5 经验库
+  //   记忆 = 发生的事，经验 = 学到的。反思 → 经验 → 长期沉淀
+  //   关联 ADR-004 §3.3
+  //   区别于 src/memory/experience-collector.js（JSONL 行为日志，职责正交）
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS experience (
+      id               INTEGER PRIMARY KEY AUTOINCREMENT,
+      trigger_sig      TEXT    NOT NULL,
+      trigger          TEXT    NOT NULL,
+      action           TEXT    NOT NULL,
+      result           TEXT    NOT NULL,
+      learned          TEXT    NOT NULL,
+      confidence       REAL    NOT NULL DEFAULT 0.5,
+      since            TEXT    NOT NULL DEFAULT (datetime('now')),
+      last_used        TEXT,
+      use_count        INTEGER NOT NULL DEFAULT 0,
+      feedback_pos     INTEGER NOT NULL DEFAULT 0,
+      feedback_neg     INTEGER NOT NULL DEFAULT 0,
+      source           TEXT    NOT NULL DEFAULT 'reflection',
+      related_concepts TEXT    NOT NULL DEFAULT '[]',
+      embedding        BLOB,
+      created_at       TEXT    NOT NULL DEFAULT (datetime('now')),
+      updated_at       TEXT    NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_experience_trigger_sig  ON experience(trigger_sig);
+    CREATE INDEX IF NOT EXISTS idx_experience_confidence   ON experience(confidence);
+    CREATE INDEX IF NOT EXISTS idx_experience_since        ON experience(since);
+  `)
 }
 

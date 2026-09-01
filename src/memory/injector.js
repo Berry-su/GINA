@@ -32,6 +32,10 @@ import { selectSkillsForMessage, formatSkillsForContext } from '../skills/regist
 //   两者都是 meta-info 段，跟 emotion 一样严格隔离（不进 LLM tool/决策调用链路）
 import { getSelfModel } from '../self/model.js'
 import { getDirectionController } from '../learning/direction.js'
+// C-4.3 joy emotion（2026-09-01 续篇）—— 只 joy 一个维度，meta-info 段
+//   唯一注入出口 = buildContextBlock 的 <emotional-state> 段
+//   严格隔离：emotion-isolation.test.js 每 PR 必跑 7 断言
+import { getJoyState } from '../emotion/joy-state.js'
 
 // runInjector 内部用到的检索/选择/解析原语（已拆到 ./injector-retrieval.js）
 import {
@@ -338,6 +342,19 @@ export async function runInjector({ message, state, hint = '', currentChannel = 
     currentDirectionText = ''
   }
 
+  // C-4.3 joy emotion（2026-09-01 续篇）：meta-info 段，紧跟 self-model 之后
+  //   - JoyState.injectFor() 渲染 <emotional-state> 段
+  //   - 严格隔离：emotion-isolation.test.js 每 PR 必跑
+  //   - 失败不阻塞（与 self-model / direction 一致兜底）
+  let emotionalStateText = ''
+  try {
+    const joy = getJoyState()
+    joy.tick()
+    emotionalStateText = joy.injectFor()
+  } catch (err) {
+    emotionalStateText = ''
+  }
+
   // Memory-Optimization v0.1 Phase 0：记录这一轮召回的"命中了什么/漏了什么"。
   // 写入 best-effort；任何失败都吞掉，绝不影响主流程。
   // chosen_count = 经过 rerank + topK 截断后真正进 prompt 的条数（含 recall hits）；
@@ -389,6 +406,8 @@ export async function runInjector({ message, state, hint = '', currentChannel = 
     // C-4.1 self-model + C-4.2 direction（2026-09-01 新基础设施）
     selfModel: selfModelText ? { text: selfModelText } : null,
     currentDirection: currentDirectionText || null,
+    // C-4.3 joy emotion（2026-09-01 续篇）
+    emotionalState: emotionalStateText || null,
     emotionProfile,
     emotionPerception,
     emotionSnapshot,
