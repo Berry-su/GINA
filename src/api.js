@@ -33,6 +33,9 @@ import { handleTTSRoutes } from './api/routes/tts.js'
 import { handleTradingRoutes } from './api/routes/trading.js'
 import { handleVisionRoutes } from './api/routes/vision.js'
 import { handleTranslateRoutes } from './api/routes/translate.js'
+import { handleCalendarRoutes } from './api/routes/calendar.js'
+import { handleEmailRoutes } from './api/routes/email.js'
+import { handleTasksRoutes } from './api/routes/tasks.js'
 import {
   attachWebSocketIdleTimeout,
   authorizeWebSocketUpgrade,
@@ -178,6 +181,9 @@ async function dispatchHttpRoutes(req, res, url, context) {
   if (await handleStaticRoutes(req, res, url)) return true
   if (await handleVisionRoutes(req, res, url)) return true
   if (await handleTranslateRoutes(req, res, url)) return true
+  if (await handleCalendarRoutes(req, res, url)) return true
+  if (await handleEmailRoutes(req, res, url)) return true
+  if (await handleTasksRoutes(req, res, url)) return true
   return false
 }
 

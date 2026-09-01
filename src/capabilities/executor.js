@@ -36,6 +36,7 @@ import { execAnalyzeImage, execCaptureScreen, execManageApiCapability, execRunAp
 import { fetchCalendarEvents, fetchRecentEmails, searchContacts } from '../data-sources/personal-data-sources.js'
 import { execManageRule } from './tools/rules.js'
 import { enqueueOrder, listOrders, completeOrder, nextPendingOrder, getOrderQueueStats } from '../order-queue.js'
+import { execQueryCalendar, execQueryEmail, execQueryTasks } from './tools/connectors.js'
 import { execBrowserSetDisplayMode } from './tools/browser-display.js'
 import { execBrowserClearData } from './tools/browser-data.js'
 import { execSystemBrowserOpen } from './tools/system-browser.js'
@@ -369,6 +370,12 @@ async function executeToolUnchecked(name, args, context = {}) {
         return await execRecentEmails(args)
       case 'search_contacts':
         return await execSearchContacts(args)
+      case 'query_calendar':
+        return await execQueryCalendar(args, context)
+      case 'query_email':
+        return await execQueryEmail(args, context)
+      case 'query_tasks':
+        return await execQueryTasks(args, context)
       case 'manage_api_capability':
         return execManageApiCapability(args)
       case 'find_tool':
