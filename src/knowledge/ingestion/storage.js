@@ -12,7 +12,7 @@
 //   domain=general（ingestion 是通用知识；未来分域用 topic 推断）
 //   slug=ing_<timestamp>_<idx>（每条 fact 唯一）
 //   失败静默：integration 挂掉不影响 ingestion 主存储流程
-import { getIntegration as getIntegrationSingleton } from '../../cats_net/integration/init.js'
+import { getIntegration as getIntegrationSingleton } from '../../brain/integration/init.js'
 
 /**
  * 存储 nodes + facts 到 CATS-Net + memories

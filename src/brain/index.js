@@ -62,7 +62,8 @@ import {
 } from '../decision/explainability-layer.js'
 
 // ========== CATS-Net 认知内核（迁移自新 Gina，纯 ESM 无原生依赖） ==========
-import { CatsNet } from '../cats_net/index.js'
+// C-2.7 阶段二：改走 @berrysu/gina-core/cats_net 内核真理源（ADR-001）
+import { CatsNet } from '@berrysu/gina-core/cats_net'
 
 // ========== 金融大脑（分析师团队 + 数据采集引擎 + 真实数据源，迁移自新 Gina） ==========
 import { existsSync } from 'node:fs'

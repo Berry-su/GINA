@@ -17,7 +17,7 @@ import {
   ShortTermMemory,
   LongTermMemory,
 } from '../src/layered-memory/index.js'
-import { CatsNet } from '../src/cats_net/index.js'
+import { CatsNet } from '@berrysu/gina-core/cats_net'
 
 // ---------------------------------------------------------------------------
 describe('WorkingMemory —— 工作记忆', () => {

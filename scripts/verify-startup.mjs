@@ -14,7 +14,7 @@ import { createA2AServer } from '../src/a2a/a2a-protocol.js'
 import { StateMachine, State, Transition } from '../src/state_machine/index.js'
 import { MCPScheduler, Tool } from '../src/tool-scheduler/index.js'
 import { MemoryManager } from '../src/layered-memory/index.js'
-import { CatsNet } from '../src/cats_net/index.js'
+import { CatsNet } from '@berrysu/gina-core/cats_net'
 import { getKnowledgeGraph } from '../src/memory/knowledge-distiller.js'
 
 const results = []

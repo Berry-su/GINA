@@ -38,7 +38,7 @@ import { getDirectionController } from '../learning/direction.js'
 import { getJoyState } from '../emotion/joy-state.js'
 // C-3.9 L1/L2 hot path wiring（2026-09-01）—— 把 L1 注入决策 + L2 召回激活
 //   写到 CATS-Net 同一张图，失败静默不破主流程
-import { getIntegration as getIntegrationSingleton } from '../cats_net/integration/init.js'
+import { getIntegration as getIntegrationSingleton } from '../brain/integration/init.js'
 
 // runInjector 内部用到的检索/选择/解析原语（已拆到 ./injector-retrieval.js）
 import {

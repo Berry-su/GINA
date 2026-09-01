@@ -13,7 +13,7 @@
  * 容错：所有数据库/CATS-Net 调用包 try/catch，内核或数据库不可用时降级不崩。
  */
 
-import { CatsNet } from '../cats_net/index.js'
+import { CatsNet } from '@berrysu/gina-core/cats_net'
 import {
   insertMemory,
   searchMemories,
@@ -21,7 +21,7 @@ import {
 } from '../capabilities/db.js'
 // C-3.9 L2 hot path wiring（2026-09-01）—— 写入观测/知识到 CATS-Net 同一张图
 //   失败静默不破主流程（write path 关键）
-import { getIntegration as getIntegrationSingleton } from '../cats_net/integration/init.js'
+import { getIntegration as getIntegrationSingleton } from '../brain/integration/init.js'
 
 const KNOWLEDGE_SOURCES = new Set([
   'market_case', 'investment_book', 'investment_technique', 'investor_case', 'seed_knowledge',

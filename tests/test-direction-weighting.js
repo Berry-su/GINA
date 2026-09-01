@@ -25,8 +25,8 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 
-import { CatsNet } from '../src/cats_net/index.js'
-import { createIntegrations } from '../src/cats_net/integration/index.js'
+import { CatsNet } from '@berrysu/gina-core/cats_net'
+import { createIntegrations } from '../src/brain/integration/index.js'
 import Database from 'better-sqlite3'
 
 import { DirectionController, resetDirectionControllerForTest } from '../src/learning/direction.js'

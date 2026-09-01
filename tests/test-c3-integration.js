@@ -17,8 +17,8 @@ import { join, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { dirname } from 'node:path'
 
-import { CatsNet } from '../src/cats_net/index.js'
-import { createIntegrations } from '../src/cats_net/integration/index.js'
+import { CatsNet } from '@berrysu/gina-core/cats_net'
+import { createIntegrations } from '../src/brain/integration/index.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -339,8 +339,8 @@ test('isolation: 决策节点 attributes 不含 emotion', () => {
 })
 
 test('isolation: l7 源码不 import joy-state / emotion-engine', () => {
-  // 扫描 src/cats_net/integration/l7.js，确认不 import emotion 相关模块
-  const l7Src = readFileSync(join(SRC_DIR, 'cats_net', 'integration', 'l7.js'), 'utf-8')
+  // 扫描 src/brain/integration/l7.js，确认不 import emotion 相关模块
+  const l7Src = readFileSync(join(SRC_DIR, 'brain', 'integration', 'l7.js'), 'utf-8')
   assert.ok(!l7Src.includes('joy-state'), 'l7.js 不应 import joy-state')
   assert.ok(!l7Src.includes('emotion-engine'), 'l7.js 不应 import emotion-engine')
   assert.ok(!l7Src.includes('emotion/joy'), 'l7.js 不应 import emotion/joy')

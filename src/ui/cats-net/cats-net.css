@@ -1,0 +1,258 @@
+/* CATS-Net 3D 概念图 · 辅助 CSS
+ * 视觉规范:Monochrome Precision HUD(黑白灰 + 细线 + 切角 + 等宽数字)
+ * 严格遵循 design-tokens.js:
+ *   - 配色:仅 #050506 / #0a0a0b / #2a2a2c / #8a8a8e / #e6e6e6
+ *   - 间距:8pt 栅格
+ *   - 字体:ui-monospace(SFMono) for numbers / ui-sans-serif for labels
+ *   - 切角:clip-path polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%)
+ *   - 严禁:gradient / backdrop-blur / 大圆角 / 发光 / 紫青
+ */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background: #050506;
+  color: #e6e6e6;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  overflow: hidden;
+}
+
+/* 3D canvas:全屏 */
+#stage {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  display: block;
+  background: #050506;
+  cursor: grab;
+}
+#stage:active { cursor: grabbing; }
+
+/* ── 顶栏 HUD ───────────────────────────────────────── */
+#hud-top {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+  pointer-events: none;
+}
+.hud-cell {
+  pointer-events: auto;
+  background: #0a0a0b;
+  border: 1px solid #2a2a2c;
+  padding: 8px 12px;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+}
+.hud-cell-title {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8a8a8e;
+  margin-bottom: 4px;
+}
+.hud-cell-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+  color: #e6e6e6;
+}
+#hud-title .hud-cell-value {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* 层次过滤按钮组 */
+.level-group {
+  display: flex;
+  gap: 0;
+  border: 1px solid #2a2a2c;
+  background: #050506;
+}
+.level-btn {
+  padding: 6px 10px;
+  background: transparent;
+  color: #8a8a8e;
+  border: none;
+  border-right: 1px solid #2a2a2c;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.level-btn:last-child { border-right: none; }
+.level-btn:hover { color: #e6e6e6; background: #0a0a0b; }
+.level-btn.active { color: #050506; background: #e6e6e6; }
+
+/* 激活阈值滑块 */
+#act-slider {
+  width: 140px;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 2px;
+  background: #2a2a2c;
+  outline: none;
+  margin: 8px 0 4px;
+}
+#act-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #e6e6e6;
+  border: 1px solid #2a2a2c;
+  cursor: pointer;
+  border-radius: 0;
+}
+#act-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: #e6e6e6;
+  border: 1px solid #2a2a2c;
+  cursor: pointer;
+  border-radius: 0;
+}
+#act-slider-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+#act-slider-val {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+  color: #e6e6e6;
+}
+
+/* ── 侧边节点详情 ────────────────────────────────────── */
+#hud-detail {
+  position: fixed;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 280px;
+  background: #0a0a0b;
+  border: 1px solid #2a2a2c;
+  padding: 12px;
+  z-index: 10;
+  display: none;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+}
+#hud-detail-name {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+  color: #e6e6e6;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+  word-break: break-all;
+}
+#hud-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: #8a8a8e;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+#hud-detail-attrs {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #2a2a2c;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: #8a8a8e;
+}
+
+/* ── 底部状态条 ────────────────────────────────────── */
+#hud-bottom {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+  pointer-events: none;
+}
+#hud-bottom .hud-cell { flex: 1; pointer-events: auto; }
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+  color: #e6e6e6;
+}
+.stat-row .key { color: #8a8a8e; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+
+/* ── 边类型图例(右下小角) ──────────────────────────── */
+#hud-legend {
+  position: fixed;
+  bottom: 96px;
+  left: 16px;
+  background: #0a0a0b;
+  border: 1px solid #2a2a2c;
+  padding: 8px 12px;
+  z-index: 10;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+}
+#hud-legend-title {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8a8a8e;
+  margin-bottom: 6px;
+}
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: #8a8a8e;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 3px 0;
+}
+.legend-line {
+  width: 24px;
+  height: 0;
+  border-top: 1px solid;
+}
+.legend-line.causal { border-top-style: solid; border-color: #8a8a8e; }
+.legend-line.association { border-top-style: dashed; border-color: #2a2a2c; }
+.legend-line.hierarchical { border-top-style: dotted; border-color: #3a3a3c; }
+
+/* ── 回 brain-ui 按钮(左上) ──────────────────────────── */
+#hud-back {
+  position: fixed;
+  top: 80px;
+  left: 16px;
+  z-index: 10;
+  background: #0a0a0b;
+  border: 1px solid #2a2a2c;
+  color: #8a8a8e;
+  padding: 6px 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+  text-decoration: none;
+  display: inline-block;
+}
+#hud-back:hover { color: #e6e6e6; border-color: #3a3a3c; }

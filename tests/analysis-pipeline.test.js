@@ -7,7 +7,7 @@
 import { describe, test } from 'node:test'
 import assert from 'node:assert/strict'
 
-import { CatsNet } from '../src/cats_net/index.js'
+import { CatsNet } from '@berrysu/gina-core/cats_net'
 import { MemoryHub } from '../src/memory-hub/index.js'
 import { createSharedBrain, createAnalystTeam, Integrator } from '../src/analysts/index.js'
 

@@ -13,7 +13,7 @@
 import { HSM } from './hsm.js'
 // C-3.9 L5 hot path wiring（2026-09-01）—— 状态转换进 CATS-Net 同一张图
 //   失败静默不破主流程
-import { getIntegration as getIntegrationSingleton } from '../cats_net/integration/init.js'
+import { getIntegration as getIntegrationSingleton } from '../brain/integration/init.js'
 
 export class StateMachine extends HSM {
   /**

@@ -1972,7 +1972,7 @@ async function main() {
   //   把 SelfModel / 工具 / 状态机 / 决策 / 知识 / 记忆 / 意识状态 全部入 CATS-Net 同一张图
   //   失败不阻塞主流程（懒加载 + 静默）
   try {
-    const { initIntegration } = await import('./cats_net/integration/init.js')
+    const { initIntegration } = await import('./brain/integration/init.js')
     const { getCatsNet } = await import('./brain/index.js')
     const { getSelfModel } = await import('./self/model.js')
     const { getDB } = await import('./capabilities/db.js')

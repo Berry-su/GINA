@@ -12,7 +12,7 @@
  * @module src/cats_net/integration/_base
  */
 
-import { CatsNet } from '../cats-net.js'
+import { CatsNet } from '@berrysu/gina-core/cats_net'
 
 /**
  * 8 层的 id 前缀（固定，方便 grep）

@@ -8,7 +8,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
-import { CatsNet } from '../cats-net.js'
+import { CatsNet } from '@berrysu/gina-core/cats_net'
 import { createIntegrations } from './index.js'
 
 // ---------------------------------------------------------------------------

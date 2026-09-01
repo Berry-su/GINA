@@ -1,5 +1,6 @@
 // CATS-Net 移植自检（Phase 1 smoke test）
-import { CatsNet, ConceptNode, ConflictResolver, Serializer, MemoryProjection } from './index.js'
+// 阶段二 (C-2.7) 后改走 @berrysu/gina-core/cats_net 真源
+import { CatsNet, ConceptNode, ConflictResolver, Serializer, MemoryProjection } from '@berrysu/gina-core/cats_net'
 
 const brain = new CatsNet({ maxIterations: 50, timeoutMs: 3000 })
 

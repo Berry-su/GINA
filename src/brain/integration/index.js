@@ -9,7 +9,8 @@
  *   - getL0() / getL1() / ...     单层访问
  *
  * 使用示例：
- *   import { createIntegrations } from './cats_net/integration/index.js'
+ *   import { createIntegrations } from '@berrysu/gina-core/cats_net' (CatsNet)
+ *   import { createIntegrations } from './brain/integration/index.js' (本编排器)
  *   const ctx = createIntegrations({ catsNet, db, selfModel, ... })
  *   ctx.l0.tick({ consciousnessState: 'focused', tickCount: 42 })
  *   ctx.l6.recordCall('read_file', { success: true })

@@ -21,9 +21,9 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 
-import { CatsNet } from '../src/cats_net/index.js'
-import { createIntegrations } from '../src/cats_net/integration/index.js'
-import { initIntegration, getIntegration, _resetIntegrationForTest } from '../src/cats_net/integration/init.js'
+import { CatsNet } from '@berrysu/gina-core/cats_net'
+import { createIntegrations } from '../src/brain/integration/index.js'
+import { initIntegration, getIntegration, _resetIntegrationForTest } from '../src/brain/integration/init.js'
 
 // ---------------------------------------------------------------------------
 // 工具：每个 test 独立 catsNet + integration instance（避免共享污染）

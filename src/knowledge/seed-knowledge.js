@@ -14,11 +14,11 @@
 import { readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { paths } from '../paths.js'
-import { CatsNet, ConceptNode } from '../cats_net/index.js'
+import { CatsNet, ConceptNode } from '@berrysu/gina-core/cats_net'
 import { insertMemory, memoryExistsByMemId, getConfig, setConfig } from '../capabilities/db.js'
 // C-3.9 L4 hot path wiring（2026-09-01）—— 知识条目进 CATS-Net 同一张图
 //   失败静默不破播种主流程
-import { getIntegration as getIntegrationSingleton } from '../cats_net/integration/init.js'
+import { getIntegration as getIntegrationSingleton } from '../brain/integration/init.js'
 
 const SEED_FLAG = 'knowledge_seeded'
 

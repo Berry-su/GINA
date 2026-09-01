@@ -15,7 +15,7 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { paths } from '../paths.js'
 
-import { CatsNet } from '../cats_net/index.js'
+import { CatsNet } from '@berrysu/gina-core/cats_net'
 import { MemoryHub } from '../memory-hub/index.js'
 import { KnowledgeAdvisor, MarketRegimeAdvisor } from '../trading/index.js'
 

@@ -21,7 +21,7 @@
     ]
   },
   "scripts": {
-    "test": "node src/cats_net/selftest.js && node src/analysts/selftest.js && node scripts/verify-startup.mjs && node src/self/test-model.js && node src/learning/test-direction.js && node src/test-c4-integration.js && node tests/emotion-isolation.test.js && node src/emotion/test-joy.js && node src/experience/test-experience.js && node src/knowledge/ingestion/test-ingestion-pipeline.js && node --test src/cats_net/integration/test-smoke.js && node --test tests/test-c3-integration.js && node --test tests/test-c3-9-hot-path-wiring.js && node --test tests/test-direction-weighting.js",
+    "test": "node tests/cats-net-selftest.js && node src/analysts/selftest.js && node scripts/verify-startup.mjs && node src/self/test-model.js && node src/learning/test-direction.js && node src/test-c4-integration.js && node tests/emotion-isolation.test.js && node src/emotion/test-joy.js && node src/experience/test-experience.js && node src/knowledge/ingestion/test-ingestion-pipeline.js && node --test src/brain/integration/test-smoke.js && node --test tests/test-c3-integration.js && node --test tests/test-c3-9-hot-path-wiring.js && node --test tests/test-direction-weighting.js",
     "test:self-model": "node src/self/test-model.js",
     "test:direction": "node src/learning/test-direction.js",
     "test:joy": "node src/emotion/test-joy.js",

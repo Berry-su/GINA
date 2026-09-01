@@ -14,7 +14,7 @@
 import { readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 
-import { CatsNet, ConceptNode } from '../src/cats_net/index.js'
+import { CatsNet, ConceptNode } from '@berrysu/gina-core/cats_net'
 import { insertMemory } from '../src/capabilities/db.js'
 
 const DEFAULT_DATA_DIR = '/Users/ahs/Desktop/gina增加计划登记/data'
