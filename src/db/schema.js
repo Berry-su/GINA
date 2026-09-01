@@ -652,6 +652,7 @@ export function initializeSchema(db) {
   //   记忆 = 发生的事，经验 = 学到的。反思 → 经验 → 长期沉淀
   //   关联 ADR-004 §3.3
   //   区别于 src/memory/experience-collector.js（JSONL 行为日志，职责正交）
+  //   v0.1.1（2026-09-01）: 加 direction_match / context_window 字段（C-4.6 反思权重 + ADR-003 §3.2.6）
   db.exec(`
     CREATE TABLE IF NOT EXISTS experience (
       id               INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -669,6 +670,8 @@ export function initializeSchema(db) {
       source           TEXT    NOT NULL DEFAULT 'reflection',
       related_concepts TEXT    NOT NULL DEFAULT '[]',
       embedding        BLOB,
+      direction_match  INTEGER NOT NULL DEFAULT 0,
+      context_window   REAL    NOT NULL DEFAULT 1.0,
       created_at       TEXT    NOT NULL DEFAULT (datetime('now')),
       updated_at       TEXT    NOT NULL DEFAULT (datetime('now'))
     );
@@ -676,5 +679,10 @@ export function initializeSchema(db) {
     CREATE INDEX IF NOT EXISTS idx_experience_confidence   ON experience(confidence);
     CREATE INDEX IF NOT EXISTS idx_experience_since        ON experience(since);
   `)
+  // 迁移：旧表加 direction_match / context_window 字段 + 索引（idempotent）
+  //   旧 DB 上 direction_match 列不存在 → ALTER + CREATE INDEX 包 try/catch
+  try { db.exec(`ALTER TABLE experience ADD COLUMN direction_match INTEGER NOT NULL DEFAULT 0`) } catch {}
+  try { db.exec(`ALTER TABLE experience ADD COLUMN context_window REAL NOT NULL DEFAULT 1.0`) } catch {}
+  try { db.exec(`CREATE INDEX IF NOT EXISTS idx_experience_direction ON experience(direction_match)`) } catch {}
 }
 

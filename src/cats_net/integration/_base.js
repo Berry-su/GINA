@@ -170,6 +170,7 @@ export class IntegrationContext {
    * @param {object} [options.analysts] 可选；L7 决策 record
    * @param {object} [options.stateMachine] 可选；L5 状态机 hook
    * @param {object} [options.selfModel] 可选；L0 SelfModel 同步
+   * @param {function} [options.reflectionHook] 可选；L6 工具失败反思回调（direction 领域失败时调）
    */
   constructor(options = {}) {
     if (!options.catsNet) {
@@ -184,6 +185,7 @@ export class IntegrationContext {
     this.analysts = options.analysts || null
     this.stateMachine = options.stateMachine || null
     this.selfModel = options.selfModel || null
+    this.reflectionHook = options.reflectionHook || null
     /** @type {Map<string, {ts:number, layer:string, op:string}>} 集成层事件 trace */
     this._events = []
     /** @type {Map<string, number> 各层节点数统计 */

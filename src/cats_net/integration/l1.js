@@ -51,11 +51,18 @@ function ensureLogTable(db) {
       target_concept TEXT,
       duration_ms INTEGER,
       used INTEGER NOT NULL DEFAULT 0,
-      catsnet_injection_id TEXT
+      catsnet_injection_id TEXT,
+      priority REAL NOT NULL DEFAULT 1.0,
+      direction_match INTEGER NOT NULL DEFAULT 0
     );
     CREATE INDEX IF NOT EXISTS idx_${LOG_TABLE}_ts ON ${LOG_TABLE}(ts_ms);
     CREATE INDEX IF NOT EXISTS idx_${LOG_TABLE}_strategy ON ${LOG_TABLE}(strategy);
+    CREATE INDEX IF NOT EXISTS idx_${LOG_TABLE}_direction ON ${LOG_TABLE}(direction_match);
   `)
+  // 迁移：旧表加 priority / direction_match 字段（idempotent）
+  try { db.exec(`ALTER TABLE ${LOG_TABLE} ADD COLUMN priority REAL NOT NULL DEFAULT 1.0`) } catch {}
+  try { db.exec(`ALTER TABLE ${LOG_TABLE} ADD COLUMN direction_match INTEGER NOT NULL DEFAULT 0`) } catch {}
+  try { db.exec(`CREATE INDEX IF NOT EXISTS idx_${LOG_TABLE}_direction ON ${LOG_TABLE}(direction_match)`) } catch {}
 }
 
 export class L1Integration {
@@ -96,13 +103,17 @@ export class L1Integration {
    * @param {string} [opts.target] 触发的 CATS-Net concept id（可选）
    * @param {number} [opts.durationMs] 注入耗时
    * @param {string} [opts.context] 额外 context
+   * @param {number} [opts.priority=1.0] 注入优先级（direction 领域 ×1.5，基础 1.0）
+   * @param {boolean} [opts.directionMatch=false] 是否属于当前 direction 领域
    * @returns {{injectionId: string, logId: number|null}}
    */
-  recordInjection({ strategy, confidence, target = null, durationMs = null, context = null } = {}) {
+  recordInjection({ strategy, confidence, target = null, durationMs = null, context = null, priority = 1.0, directionMatch = false } = {}) {
     if (!STRATEGY_NAMES[strategy]) {
       throw new RangeError(`未知 ACI 策略: ${strategy}，合法值: ${Object.keys(STRATEGY_NAMES).join(', ')}`)
     }
     const conf = Math.max(0, Math.min(1, Number(confidence) || 0))
+    const pri = Math.max(0, Math.min(10, Number(priority) || 1.0))
+    const dirMatch = directionMatch === true ? 1 : 0
     const tsMs = Date.now()
     this._seq = (this._seq || 0) + 1
     const injectionId = makeId(LAYER, 'injection', `${tsMs}_${this._seq}`)
@@ -122,6 +133,8 @@ export class L1Integration {
         durationMs: typeof durationMs === 'number' ? durationMs : 0,
         ts: tsMs,
         context: typeof context === 'string' ? context.slice(0, 100) : '',
+        priority: pri,
+        directionMatch: dirMatch,
       }),
     })
 
@@ -137,10 +150,10 @@ export class L1Integration {
     if (this.db) {
       try {
         const stmt = this.db.prepare(`
-          INSERT INTO ${LOG_TABLE} (ts_ms, strategy, confidence, target_concept, duration_ms, used, catsnet_injection_id)
-          VALUES (?, ?, ?, ?, ?, 0, ?)
+          INSERT INTO ${LOG_TABLE} (ts_ms, strategy, confidence, target_concept, duration_ms, used, catsnet_injection_id, priority, direction_match)
+          VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?)
         `)
-        const r = stmt.run(tsMs, strategy, conf, target || null, durationMs || null, injectionId)
+        const r = stmt.run(tsMs, strategy, conf, target || null, durationMs || null, injectionId, pri, dirMatch)
         logId = Number(r.lastInsertRowid) || null
       } catch (err) {
         // log 失败不阻塞主流程
@@ -149,7 +162,7 @@ export class L1Integration {
     }
 
     this.ctx.bumpLayer(LAYER)
-    this.ctx.trace(LAYER, 'recordInjection', { injectionId, strategy, conf })
+    this.ctx.trace(LAYER, 'recordInjection', { injectionId, strategy, conf, priority: pri, directionMatch: dirMatch })
     return { injectionId, logId, node }
   }
 

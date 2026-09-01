@@ -399,11 +399,31 @@ export async function runInjector({ message, state, hint = '', currentChannel = 
         const targetMem = allMemories[0] || recallMemories[0]
         const target = targetMem?.mem_id || null
         const conf = Math.min(1, 0.4 + Math.min(0.5, allMemories.length * 0.05))
+        // C-3.4 方向加权：direction 领域记忆优先级 ×1.5（老板 9-01 拍板 ADR-003 §3.2.6）
+        //   失败静默：direction.getCurrent() 返回 null 时跳过加权
+        let priority = 1.0
+        let directionMatch = false
+        try {
+          const direction = getDirectionController()
+          const currentDir = direction.getCurrent()
+          const topic = currentDir?.topic || null
+          if (topic) {
+            // 用 targetMem 的 mem_id / title / content 跟 topic 做 match
+            const probeText = [targetMem?.mem_id, targetMem?.title, targetMem?.content]
+              .filter(Boolean).join(' ')
+            directionMatch = direction.matchConcept(probeText, topic)
+            if (directionMatch) priority = 1.5
+          }
+        } catch {
+          // 静默：direction 模块挂掉不破主循环
+        }
         integ.l1.recordInjection({
           strategy: 'semantic_memory_prefetch',
           confidence: conf,
           target,
           context: (messageBody || '').slice(0, 100),
+          priority,
+          directionMatch,
         })
       }
       // L2: 激活召回的 memory 概念（CATS-Net 后续扩散能用到）

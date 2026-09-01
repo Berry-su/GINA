@@ -79,6 +79,10 @@ export class ExperienceLibrary {
     } catch (err) {
       console.warn('[experience-library] experience table missing, schema not initialized:', err?.message || err)
     }
+    // 迁移：新增 direction_match / context_window 字段（idempotent）
+    try { this.db.exec(`ALTER TABLE experience ADD COLUMN direction_match INTEGER NOT NULL DEFAULT 0`) } catch {}
+    try { this.db.exec(`ALTER TABLE experience ADD COLUMN context_window REAL NOT NULL DEFAULT 1.0`) } catch {}
+    try { this.db.exec(`CREATE INDEX IF NOT EXISTS idx_experience_direction ON experience(direction_match)`) } catch {}
   }
 
   /**
@@ -92,9 +96,11 @@ export class ExperienceLibrary {
    * @param {string} [entry.source='reflection']
    * @param {string[]} [entry.relatedConcepts=[]]
    * @param {Buffer|null} [entry.embedding=null]
+   * @param {boolean} [entry.directionMatch=false] 是否属于 direction 领域（ADR-003 §3.2.6）
+   * @param {number} [entry.contextWindow=1.0] 反思深度（direction 领域 ×2）
    * @returns {number} experience row id
    */
-  record({ trigger, action, result, learned, confidence = DEFAULT_CONFIDENCE, source = 'reflection', relatedConcepts = [], embedding = null } = {}) {
+  record({ trigger, action, result, learned, confidence = DEFAULT_CONFIDENCE, source = 'reflection', relatedConcepts = [], embedding = null, directionMatch = false, contextWindow = 1.0 } = {}) {
     if (!trigger || !action || !result || !learned) {
       console.warn('[experience-library] record: missing required field')
       return -1
@@ -103,28 +109,31 @@ export class ExperienceLibrary {
     const conf = Math.max(0, Math.min(1, Number(confidence) || DEFAULT_CONFIDENCE))
     const sourceStr = String(source || 'reflection').slice(0, 60)
     const conceptsJson = JSON.stringify(Array.isArray(relatedConcepts) ? relatedConcepts : [])
+    const dirMatchInt = directionMatch === true ? 1 : 0
+    const ctxWin = Math.max(0.1, Math.min(10, Number(contextWindow) || 1.0))
 
     let id = -1
     try {
-      // 查找 trigger_sig 已有记录（合并：use_count +1, confidence 加权平均）
+      // 查找 trigger_sig 已有记录（合并：use_count +1, confidence 加权平均；direction 标记 max）
       const existing = this.db.prepare(
-        'SELECT id, use_count, confidence FROM experience WHERE trigger_sig = ? ORDER BY use_count DESC LIMIT 1'
+        'SELECT id, use_count, confidence, direction_match FROM experience WHERE trigger_sig = ? ORDER BY use_count DESC LIMIT 1'
       ).get(triggerSig)
 
       if (existing) {
         const newUse = (existing.use_count || 0) + 1
         const newConf = ((existing.confidence * existing.use_count) + conf) / newUse
+        const newDirMatch = Math.max(existing.direction_match || 0, dirMatchInt)
         this.db.prepare(`
           UPDATE experience
-          SET use_count = ?, confidence = ?, updated_at = ?
+          SET use_count = ?, confidence = ?, updated_at = ?, direction_match = ?, context_window = ?
           WHERE id = ?
-        `).run(newUse, newConf, _nowIso(), existing.id)
+        `).run(newUse, newConf, _nowIso(), newDirMatch, ctxWin, existing.id)
         id = existing.id
       } else {
         const info = this.db.prepare(`
           INSERT INTO experience
-            (trigger_sig, trigger, action, result, learned, confidence, since, source, related_concepts, embedding, use_count)
-          VALUES (?, ?, ?, ?, ?, ?, datetime('now'), ?, ?, ?, 1)
+            (trigger_sig, trigger, action, result, learned, confidence, since, source, related_concepts, embedding, use_count, direction_match, context_window)
+          VALUES (?, ?, ?, ?, ?, ?, datetime('now'), ?, ?, ?, 1, ?, ?)
         `).run(
           triggerSig,
           String(trigger).slice(0, 500),
@@ -134,7 +143,9 @@ export class ExperienceLibrary {
           conf,
           sourceStr,
           conceptsJson,
-          embedding
+          embedding,
+          dirMatchInt,
+          ctxWin
         )
         id = info.lastInsertRowid
 
@@ -228,6 +239,10 @@ export class ExperienceLibrary {
         score = Math.min(1, score + 0.2)
       }
     }
+    // direction 领域经验行（direction_match=1）→ 额外 +0.05 优先级
+    if (row.direction_match) {
+      score = Math.min(1, score + 0.05)
+    }
     return {
       id: row.id,
       trigger: row.trigger,
@@ -242,6 +257,8 @@ export class ExperienceLibrary {
       feedback_neg: row.feedback_neg,
       source: row.source,
       related_concepts: _safeJsonParse(row.related_concepts, []),
+      direction_match: row.direction_match || 0,
+      context_window: Number(row.context_window) || 1.0,
       relevance_score: score,
     }
   }

@@ -220,6 +220,45 @@ export class DirectionController {
   }
 
   /**
+   * 读当前方向（get() 的 alias，给 L1/L6/reflection 等热路径短名调用）
+   * @returns {object|null}
+   */
+  getCurrent() {
+    return this.get()
+  }
+
+  /**
+   * 判定一个 CATS-Net concept / 文本片段 / 经验 trigger 是否属于当前 direction 领域
+   *
+   * 设计（2026-09-01 worker 拍板 · 接 C-3.4 / C-4.6 / C-7 效果）：
+   *   - 失败静默：direction 未设时返回 false（不影响主流程）
+   *   - O(1) 关键词重叠：direction topic 拆 2-gram 词表，跟 concept / text 至少 1 词命中即 true
+   *   - 不读 affective-state 任何字段（情绪隔离，老板 9-01 红线）
+   *
+   * @param {string|null|undefined} conceptIdOrText 概念 id（如 'mem_xxx'）或任意文本
+   * @param {string|null} [directionTopic] 当前方向主题（不传则内部 getCurrent）
+   * @returns {boolean}
+   */
+  matchConcept(conceptIdOrText, directionTopic = null) {
+    if (!conceptIdOrText) return false
+    const topic = (directionTopic != null ? String(directionTopic) : this.get()?.topic) || null
+    if (!topic) return false
+    const text = String(conceptIdOrText).toLowerCase()
+    if (!text) return false
+    const topicLower = String(topic).toLowerCase().trim()
+    if (!topicLower) return false
+    // 1) 子串命中：topic 整体出现在 text 中（最高优先级）
+    if (text.includes(topicLower)) return true
+    // 2) 拆词命中：topic 拆 2-12 字符片段，任一片段出现在 text 中
+    //   分隔符包含空格 / 标点 / 连字符（让 'cats-net' 拆成 'cats' / 'net' 命中 'mem_cats_001'）
+    const segments = topicLower.split(/[\s,，;；:：\-_/\\|]+/).filter(s => s.length >= 2 && s.length <= 12)
+    for (const seg of segments) {
+      if (seg && text.includes(seg)) return true
+    }
+    return false
+  }
+
+  /**
    * 注入 context 字符串
    * @returns {string} 空字符串表示无方向
    */
