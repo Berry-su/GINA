@@ -39,6 +39,10 @@ import { getJoyState } from '../emotion/joy-state.js'
 // C-3.9 L1/L2 hot path wiring（2026-09-01）—— 把 L1 注入决策 + L2 召回激活
 //   写到 CATS-Net 同一张图，失败静默不破主流程
 import { getIntegration as getIntegrationSingleton } from '../brain/integration/init.js'
+// C-4.6 R11 反思闭环（2026-09-02 老板拍板补上）—— L1 hot path 失败 + direction 领域
+//   触发 reflectOnL1Failure，方向领域失败时反思深度自动 ×2（REFLECTION_DEPTH_DIRECTION）
+//   失败静默：外层 try/catch + 反思 inner try/catch 双层兜底
+import { reflectOnL1Failure } from '../learning/reflection.js'
 
 // runInjector 内部用到的检索/选择/解析原语（已拆到 ./injector-retrieval.js）
 import {
@@ -391,18 +395,24 @@ export async function runInjector({ message, state, hint = '', currentChannel = 
   //   L2: 召回的 memory 调 activateMemory（不写新节点，只激活；写已在 addObservation 那条路径）
   //   严格隔离：走 l1.recordInjection + l2.activateMemory 已 sanitize，不进 emotion
   //   失败静默：try/catch 包裹，integration 挂掉不影响主流程
+  //
+  // C-4.6 R11 反思闭环（2026-09-02 老板拍板补上，2026-09-01 v0.1.2 R6 banner 落空补完）：
+  //   外层声明 targetMem / directionMatch / injectStrategy —— catch 块需要读 directionMatch
+  //   决定是否触发 reflectOnL1Failure（避免 ACI 噪声爆经验库，非方向领域失败不反思）
+  let targetMem = null
+  let directionMatch = false
+  let injectStrategy = 'semantic_memory_prefetch'
   try {
     const integ = getIntegrationSingleton()
     if (integ) {
       // L1: 语义记忆预判（每次 runInjector = 1 次注入决策）
       if (allMemories.length > 0 || recallMemories.length > 0) {
-        const targetMem = allMemories[0] || recallMemories[0]
+        targetMem = allMemories[0] || recallMemories[0]
         const target = targetMem?.mem_id || null
         const conf = Math.min(1, 0.4 + Math.min(0.5, allMemories.length * 0.05))
         // C-3.4 方向加权：direction 领域记忆优先级 ×1.5（老板 9-01 拍板 ADR-003 §3.2.6）
         //   失败静默：direction.getCurrent() 返回 null 时跳过加权
         let priority = 1.0
-        let directionMatch = false
         try {
           const direction = getDirectionController()
           const currentDir = direction.getCurrent()
@@ -418,7 +428,7 @@ export async function runInjector({ message, state, hint = '', currentChannel = 
           // 静默：direction 模块挂掉不破主循环
         }
         integ.l1.recordInjection({
-          strategy: 'semantic_memory_prefetch',
+          strategy: injectStrategy,
           confidence: conf,
           target,
           context: (messageBody || '').slice(0, 100),
@@ -437,8 +447,26 @@ export async function runInjector({ message, state, hint = '', currentChannel = 
         if (mid) integ.l2.activateMemory(mid, 0.5)
       }
     }
-  } catch {
+  } catch (integrationErr) {
     // 静默：integration 失败不影响 runInjector 主流程
+    // C-4.6 R11 反思闭环（2026-09-02 老板拍板补上）：
+    //   L1 hot path 失败 + direction 领域 → 触发 reflectOnL1Failure
+    //   严格隔离：directionMatch=false 时不触发（避免 ACI 噪声爆经验库）
+    //   再套一层 try/catch：反思写失败也要静默
+    if (directionMatch === true) {
+      try {
+        reflectOnL1Failure({
+          trigger: `aci_failure:${injectStrategy}`,
+          action: `aci_inject(${injectStrategy})`,
+          result: 'failed',
+          learned: `方向领域 ACI 注入失败（${injectStrategy}），需复盘策略选择`,
+          confidence: 0.4,
+          directionMatch: true,
+        })
+      } catch {
+        // 反思写失败静默
+      }
+    }
   }
 
   return {
