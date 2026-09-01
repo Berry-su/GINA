@@ -97,6 +97,8 @@ export class SelfModel {
     this.capabilityRegistry = capabilityRegistry
     this._db = _db  // reserved
     this._state = this._load()
+    /** @type {object|null} C-3 L0 integration helper（可选，外部注入） */
+    this._integrationL0 = null
   }
 
   _load() {
@@ -182,6 +184,21 @@ export class SelfModel {
       this._state.current.direction = d?.topic || null
     } catch {}
     this._save()
+    // C-3 集成 hook（懒加载，单例；失败静默不阻塞主循环）
+    //   把 SelfModel 4 维同步到 CATS-Net 同一张图（l0.js 提供 helper）
+    try {
+      if (this._integrationL0) {
+        this._integrationL0.tick({
+          consciousnessState: this._state.current.consciousnessState,
+          taskId: this._state.current.task,
+          taskSummary: this._state.current.task,
+          tickCount: this._state._meta.tickCount,
+        })
+        this._integrationL0.syncSelfModel(this.snapshot())
+      }
+    } catch {
+      // 静默失败
+    }
     return this.snapshot()
   }
 

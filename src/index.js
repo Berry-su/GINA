@@ -1968,6 +1968,47 @@ async function main() {
     console.warn('[system] 金融大脑初始化失败（不影响主功能）:', err.message)
   }
 
+  // C-3 8 层进 CATS-Net 整合（2026-09-01 ADR-005 落地）
+  //   把 SelfModel / 工具 / 状态机 / 决策 / 知识 / 记忆 / 意识状态 全部入 CATS-Net 同一张图
+  //   失败不阻塞主流程（懒加载 + 静默）
+  try {
+    const { initIntegration } = await import('./cats_net/integration/init.js')
+    const { getCatsNet } = await import('./brain/index.js')
+    const { getSelfModel } = await import('./self/model.js')
+    const { getDB } = await import('./capabilities/db.js')
+    const catsNet = getCatsNet()
+    let db = null
+    try { db = getDB() } catch {}
+    const integ = initIntegration({ catsNet, db })
+    if (integ) {
+      // 把 L0 helper 挂到 SelfModel（每 tick 自动同步 4 维）
+      try {
+        const sm = getSelfModel({ catsNet })
+        sm._integrationL0 = integ.l0
+      } catch {}
+      // L6 一次性注册已加载工具（best-effort）
+      try {
+        const { loadInstalledTools } = await import('./capabilities/marketplace/index.js')
+        const installed = await loadInstalledTools()
+        if (Array.isArray(installed)) {
+          for (const t of installed) {
+            integ.l6.registerTool({
+              name: t.name || t.id,
+              description: t.description || '',
+              category: t.category || '',
+              securityLevel: typeof t.securityLevel === 'number' ? t.securityLevel : 1,
+            })
+          }
+        }
+      } catch {}
+      // L7 一次性注册 6 分析师 + 风控官
+      try { integ.l7.registerAnalysts() } catch {}
+      console.log(`[C-3] 8 层进 CATS-Net 整合已启用（l0/l1/l2/l4/l5/l6/l7）`)
+    }
+  } catch (err) {
+    console.warn('[C-3] 整合层初始化失败（不影响主功能）:', err.message)
+  }
+
   // Start TUI
   startTUI('ID:000001')
 

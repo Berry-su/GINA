@@ -5,7 +5,19 @@
  */
 
 export { CatsNet } from './cats-net.js'
-export { ConceptNode, CONCEPT_TYPES, ACTIVATION_MIN, ACTIVATION_MAX } from './concept-node.js'
+export {
+  ConceptNode,
+  CONCEPT_TYPES,
+  CONCEPT_LEVELS,
+  ACTIVATION_MIN,
+  ACTIVATION_MAX,
+  ACTIVATION_DECAY_MODELS,
+  LEVEL_DECAY_RATES,
+  LEVEL_TRANSITION_WEIGHTS,
+  HOP_DECAY_FACTOR,
+  HISTORY_MAX_LENGTH,
+  getLevelTransitionWeight,
+} from './concept-node.js'
 export {
   ConflictResolver,
   CONFLICT_TYPES,
@@ -17,3 +29,4 @@ export {
   CATS_NET_VERSION,
 } from './serializer.js'
 export { MemoryProjection, MemoryEntry } from './memory-projection.js'
+export { CooccurrenceTracker } from './cooccurrence.js'
