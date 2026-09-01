@@ -28,6 +28,10 @@ import { processEmotionUpdate, getEmotionSnapshot } from './emotion-engine.js'
 import { getConsciousnessState, getConsciousnessPrompt } from './consciousness-state.js'
 import { formatReflectionForPrompt } from './reflection-executor.js'
 import { selectSkillsForMessage, formatSkillsForContext } from '../skills/registry.js'
+// C-4.1 self-model + C-4.2 direction（C-4 新基础设施，2026-09-01 落地）
+//   两者都是 meta-info 段，跟 emotion 一样严格隔离（不进 LLM tool/决策调用链路）
+import { getSelfModel } from '../self/model.js'
+import { getDirectionController } from '../learning/direction.js'
 
 // runInjector 内部用到的检索/选择/解析原语（已拆到 ./injector-retrieval.js）
 import {
@@ -310,6 +314,30 @@ export async function runInjector({ message, state, hint = '', currentChannel = 
     ? formatSelfEvolutionForPrompt({ maxRecent: isTickMessage ? 3 : 5 })
     : ''
 
+  // C-4.1 self-model：4 维运行时显式状态
+  //   - tick() 刷新累计时长 / tickCount / learned / loadedTools
+  //   - 走 toContextString() 输出 meta-info 字符串
+  let selfModelText = ''
+  try {
+    const sm = getSelfModel()
+    sm.tick({ state: state })
+    selfModelText = sm.toContextString()
+  } catch (err) {
+    // self-model 失败不应阻塞主流程（情绪隔离原则：不破主流程）
+    selfModelText = ''
+  }
+
+  // C-4.2 direction：选项 c 对话触发，injectFor() 渲染
+  //   - 在 pushMessage() 阶段已写入 data/direction.json
+  //   - 此处只读，渲染成 meta-info 段
+  let currentDirectionText = ''
+  try {
+    const dir = getDirectionController()
+    currentDirectionText = dir.injectFor()
+  } catch (err) {
+    currentDirectionText = ''
+  }
+
   // Memory-Optimization v0.1 Phase 0：记录这一轮召回的"命中了什么/漏了什么"。
   // 写入 best-effort；任何失败都吞掉，绝不影响主流程。
   // chosen_count = 经过 rerank + topK 截断后真正进 prompt 的条数（含 recall hits）；
@@ -358,6 +386,9 @@ export async function runInjector({ message, state, hint = '', currentChannel = 
     selfPerception,
     selfSnapshot,
     selfEvolution,
+    // C-4.1 self-model + C-4.2 direction（2026-09-01 新基础设施）
+    selfModel: selfModelText ? { text: selfModelText } : null,
+    currentDirection: currentDirectionText || null,
     emotionProfile,
     emotionPerception,
     emotionSnapshot,

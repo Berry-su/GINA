@@ -87,6 +87,9 @@ export async function buildHeartbeatSystemPromptPreview({
     security: getSecurity(),
     selfSnapshot: injection.selfSnapshot || null,
     selfEvolution: injection.selfEvolution || '',
+    // C-4.1 self-model + C-4.2 direction（2026-09-01 新基础设施）
+    selfModel: injection.selfModel || null,
+    currentDirection: injection.currentDirection || null,
   })
 
   // For the preview UI (systemPrompt.html), surface a combined view so the

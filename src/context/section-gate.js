@@ -77,6 +77,20 @@ const GATEABLE = [
     enforce: false,
   },
   {
+    field: 'selfModel',
+    section: 'self-model',
+    toText: (v) => (typeof v === 'object' && v ? (v.text || '') : (typeof v === 'string' ? v : '')),
+    empty: null,
+    enforce: false,
+  },
+  {
+    field: 'currentDirection',
+    section: 'current-direction',
+    toText: (v) => (typeof v === 'string' ? v : ''),
+    empty: null,
+    enforce: false,
+  },
+  {
     field: 'personMemory',
     section: 'person',
     toText: (v) => v ? `${v.content || ''} ${v.detail || ''}`.trim() : '',

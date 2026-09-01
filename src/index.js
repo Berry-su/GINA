@@ -1241,6 +1241,10 @@ async function runTurn(input, label, msg = null) {
       selfPerception: injection.selfPerception || null,
       selfSnapshot: injection.selfSnapshot || null,
       selfEvolution: injection.selfEvolution || '',
+      // C-4.1 self-model + C-4.2 direction（2026-09-01 新基础设施）
+      //   meta-info 段，跟 emotion 一样严格隔离（不进 LLM tool/决策调用链路）
+      selfModel: injection.selfModel || null,
+      currentDirection: injection.currentDirection || null,
       environmentSample: (() => { try { return formatEnvironmentSample(environmentSensor.senseSync()); } catch { return ''; } })(),
     }
 

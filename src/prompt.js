@@ -651,6 +651,14 @@ export function buildContextBlock({
   // 与 selfPerception 不同：snapshot 在正常情况下也出现，是 agent 的 proprioception。
   selfSnapshot = null,
   selfEvolution = '',
+  // 自主意识（self-model · C-4.1 2026-09-01）：4 维运行时显式状态
+  //   - 我是谁 / 我在做什么 / 我会什么 / 不会什么
+  //   - meta-info 段（不进 buildSystemPrompt，不进 LLM tool/决策调用链路）
+  //   - 跟 emotion 严格隔离
+  selfModel = null,
+  // 当前学习方向（direction · C-4.2 2026-09-01）：对话触发的方向控制器输出
+  //   - meta-info 段（不参与 tool/决策调用）
+  currentDirection = null,
 } = {}) {
   const sections = []
 
@@ -698,6 +706,22 @@ export function buildContextBlock({
 
   if (selfEvolution) {
     sections.push(`<self-evolution>\n${selfEvolution}\n</self-evolution>`)
+  }
+
+  // <self-model> —— 自主意识（C-4.1 · 2026-09-01）
+  //
+  // 4 维运行时显式状态: 我是谁 / 我在做什么 / 我会什么 / 不会什么
+  // meta-info 段：跟 emotion 一样位置，**严格不进** buildSystemPrompt，不进 LLM tool/决策调用链路
+  if (selfModel?.text) {
+    sections.push(`<self-model>\n${selfModel.text}\n</self-model>`)
+  }
+
+  // <current-direction> —— 当前学习方向（C-4.2 · 2026-09-01）
+  //
+  // 选项 c 对话触发方向控制器:「接下来你主攻 X」自动落 direction.json
+  // meta-info 段：影响知识注入优先级/反思深度/工具评分（接口已留，加权效果在 C-3.4/C-4.6 落地）
+  if (currentDirection) {
+    sections.push(`<current-direction>\n${currentDirection}\n</current-direction>`)
   }
 
   // <self-perception> —— 自我感知层（内在状态，不是命令）
