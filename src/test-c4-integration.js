@@ -184,8 +184,6 @@ section('10. SelfModel tick + buildContextBlock')
   assert(modelBlock && modelBlock.includes('置信度: 4'), '置信度 < 50% (失败一次: 0.5*0.9=0.45 → 45%)')
 }
 
-console.log(`\n=== C-4 集成测试结果: ${passed} passed, ${failed} failed ===`)
-
 // —— 11. C-4.3 emotional-state 段位置 ——
 // 顺序：self-snapshot → self-model → emotional-state → current-direction → self-perception
 section('11. C-4.3 emotional-state 段位置（紧跟 self-model 之后）')
