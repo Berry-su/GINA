@@ -216,5 +216,106 @@ export async function handleVisionRoutes(req, res, url) {
     return true
   }
 
+  // ── ADR-009 · Phase 1 VLM/OCR 扩展（不动现有 7 路由） ──────────────────
+  // POST /vision/see — 看图（VLM，理解图内容）
+  if (req.method === 'POST' && pathname === '/vision/see') {
+    try {
+      const body = await readJsonBody(req)
+      const { imagePath, prompt, provider = null, creds = {} } = body || {}
+      if (!imagePath) {
+        jsonResponse(res, 400, { ok: false, error: '缺少 imagePath 字段' })
+        return true
+      }
+      const mod = await import('../../multimodal/vlm.js')
+      const result = await mod.seeImage(imagePath, prompt, { provider, creds })
+      jsonResponse(res, 200, { ok: true, ...result })
+    } catch (err) {
+      console.error('[vision] /vision/see error:', err?.message || err)
+      jsonResponse(res, 500, { ok: false, error: String(err?.message || err) })
+    }
+    return true
+  }
+
+  // POST /vision/see-multi — 多图 VLM
+  if (req.method === 'POST' && pathname === '/vision/see-multi') {
+    try {
+      const body = await readJsonBody(req)
+      const { imagePaths, prompt, provider = null, creds = {} } = body || {}
+      if (!Array.isArray(imagePaths) || imagePaths.length === 0) {
+        jsonResponse(res, 400, { ok: false, error: '缺少 imagePaths 数组' })
+        return true
+      }
+      const mod = await import('../../multimodal/vlm.js')
+      const results = await mod.seeImages(imagePaths, prompt, { provider, creds })
+      jsonResponse(res, 200, { ok: true, results })
+    } catch (err) {
+      console.error('[vision] /vision/see-multi error:', err?.message || err)
+      jsonResponse(res, 500, { ok: false, error: String(err?.message || err) })
+    }
+    return true
+  }
+
+  // POST /vision/ocr — 识字（OCR，提取图内文字）
+  if (req.method === 'POST' && pathname === '/vision/ocr') {
+    try {
+      const body = await readJsonBody(req)
+      const { imagePath, language = 'en', provider = null, creds = {} } = body || {}
+      if (!imagePath) {
+        jsonResponse(res, 400, { ok: false, error: '缺少 imagePath 字段' })
+        return true
+      }
+      const mod = await import('../../multimodal/ocr.js')
+      const result = await mod.extractText(imagePath, { language, provider, creds })
+      jsonResponse(res, 200, { ok: true, ...result })
+    } catch (err) {
+      console.error('[vision] /vision/ocr error:', err?.message || err)
+      jsonResponse(res, 500, { ok: false, error: String(err?.message || err) })
+    }
+    return true
+  }
+
+  // POST /vision/ocr-multi — 多语种 OCR
+  if (req.method === 'POST' && pathname === '/vision/ocr-multi') {
+    try {
+      const body = await readJsonBody(req)
+      const { imagePath, languages, provider = null, creds = {} } = body || {}
+      if (!imagePath) {
+        jsonResponse(res, 400, { ok: false, error: '缺少 imagePath 字段' })
+        return true
+      }
+      const mod = await import('../../multimodal/ocr.js')
+      const results = await mod.extractTextMultiLang(imagePath, languages, { provider, creds })
+      jsonResponse(res, 200, { ok: true, results })
+    } catch (err) {
+      console.error('[vision] /vision/ocr-multi error:', err?.message || err)
+      jsonResponse(res, 500, { ok: false, error: String(err?.message || err) })
+    }
+    return true
+  }
+
+  // GET /vision/multimodal-status — VLM/OCR 状态 + 缓存统计
+  if (req.method === 'GET' && pathname === '/vision/multimodal-status') {
+    try {
+      const vlm = await import('../../multimodal/vlm.js')
+      const ocr = await import('../../multimodal/ocr.js')
+      jsonResponse(res, 200, {
+        ok: true,
+        vlm: {
+          providers: vlm.VLM_PROVIDERS,
+          cache: vlm.getCacheStats(),
+        },
+        ocr: {
+          providers: ocr.OCR_PROVIDERS,
+          languages: ocr.OCR_LANGUAGES,
+          cache: ocr.getCacheStats(),
+        },
+      })
+    } catch (err) {
+      console.error('[vision] /vision/multimodal-status error:', err?.message || err)
+      jsonResponse(res, 500, { ok: false, error: String(err?.message || err) })
+    }
+    return true
+  }
+
   return false
 }

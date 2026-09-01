@@ -32,6 +32,7 @@ import { handleStaticRoutes } from './api/routes/static.js'
 import { handleTTSRoutes } from './api/routes/tts.js'
 import { handleTradingRoutes } from './api/routes/trading.js'
 import { handleVisionRoutes } from './api/routes/vision.js'
+import { handleTranslateRoutes } from './api/routes/translate.js'
 import {
   attachWebSocketIdleTimeout,
   authorizeWebSocketUpgrade,
@@ -176,6 +177,7 @@ async function dispatchHttpRoutes(req, res, url, context) {
   if (await handleTTSRoutes(req, res, url)) return true
   if (await handleStaticRoutes(req, res, url)) return true
   if (await handleVisionRoutes(req, res, url)) return true
+  if (await handleTranslateRoutes(req, res, url)) return true
   return false
 }
 
