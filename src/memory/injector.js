@@ -36,6 +36,9 @@ import { getDirectionController } from '../learning/direction.js'
 //   唯一注入出口 = buildContextBlock 的 <emotional-state> 段
 //   严格隔离：emotion-isolation.test.js 每 PR 必跑 7 断言
 import { getJoyState } from '../emotion/joy-state.js'
+// C-3.9 L1/L2 hot path wiring（2026-09-01）—— 把 L1 注入决策 + L2 召回激活
+//   写到 CATS-Net 同一张图，失败静默不破主流程
+import { getIntegration as getIntegrationSingleton } from '../cats_net/integration/init.js'
 
 // runInjector 内部用到的检索/选择/解析原语（已拆到 ./injector-retrieval.js）
 import {
@@ -382,6 +385,41 @@ export async function runInjector({ message, state, hint = '', currentChannel = 
       source: 'runInjector',
     })
   } catch {}
+
+  // C-3.9 L1/L2 hot path wiring（2026-09-01）
+  //   L1: 每次 runInjector 调 = 1 次"语义记忆预判"完成，写 CATS-Net + aci_injection_log
+  //   L2: 召回的 memory 调 activateMemory（不写新节点，只激活；写已在 addObservation 那条路径）
+  //   严格隔离：走 l1.recordInjection + l2.activateMemory 已 sanitize，不进 emotion
+  //   失败静默：try/catch 包裹，integration 挂掉不影响主流程
+  try {
+    const integ = getIntegrationSingleton()
+    if (integ) {
+      // L1: 语义记忆预判（每次 runInjector = 1 次注入决策）
+      if (allMemories.length > 0 || recallMemories.length > 0) {
+        const targetMem = allMemories[0] || recallMemories[0]
+        const target = targetMem?.mem_id || null
+        const conf = Math.min(1, 0.4 + Math.min(0.5, allMemories.length * 0.05))
+        integ.l1.recordInjection({
+          strategy: 'semantic_memory_prefetch',
+          confidence: conf,
+          target,
+          context: (messageBody || '').slice(0, 100),
+        })
+      }
+      // L2: 激活召回的 memory 概念（CATS-Net 后续扩散能用到）
+      //   限 10 条避免 P95 爆掉
+      for (const m of allMemories.slice(0, 10)) {
+        const mid = m.mem_id || m.id
+        if (mid) integ.l2.activateMemory(mid, 0.3)
+      }
+      for (const m of recallMemories.slice(0, 5)) {
+        const mid = m.mem_id || m.id
+        if (mid) integ.l2.activateMemory(mid, 0.5)
+      }
+    }
+  } catch {
+    // 静默：integration 失败不影响 runInjector 主流程
+  }
 
   return {
     memories: allMemories,

@@ -16,6 +16,9 @@ import { join } from 'node:path'
 import { paths } from '../paths.js'
 import { CatsNet, ConceptNode } from '../cats_net/index.js'
 import { insertMemory, memoryExistsByMemId, getConfig, setConfig } from '../capabilities/db.js'
+// C-3.9 L4 hot path wiring（2026-09-01）—— 知识条目进 CATS-Net 同一张图
+//   失败静默不破播种主流程
+import { getIntegration as getIntegrationSingleton } from '../cats_net/integration/init.js'
 
 const SEED_FLAG = 'knowledge_seeded'
 
@@ -51,6 +54,26 @@ function seedItem(brain, { id, name, content, concepts, tags }, counters) {
       timestamp: new Date().toISOString(),
     })
     counters.inserted++
+
+    // C-3.9 L4 hot path wiring（2026-09-01）—— 知识条目进 CATS-Net 同一张图
+    //   走 l4.ingestKnowledge（已 sanitizeAttrs 剥离 emotion 字段）
+    //   domain=general（seed 知识是通用知识，未来如要分域可加 memId 前缀解析）
+    //   失败静默：integration 挂掉不影响 seed 播种主流程
+    try {
+      const integ = getIntegrationSingleton()
+      if (integ) {
+        // memId 形如 kn_<id>，domain 由 id 前缀推断（kn_* 默认 general）
+        const slug = typeof id === 'string' ? id : String(memId)
+        integ.l4.ingestKnowledge({
+          domain: 'general',
+          slug,
+          name: (name || '').slice(0, 100),
+          content: (content || '').slice(0, 1000),
+        })
+      }
+    } catch {
+      // 静默：L4 节点化失败不影响 seed 流程
+    }
   } catch (err) {
     console.log(`[seed] 写入 jarvis.db 失败(降级): ${err.message}`)
   }

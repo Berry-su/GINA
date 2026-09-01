@@ -11,6 +11,9 @@
  */
 
 import { HSM } from './hsm.js'
+// C-3.9 L5 hot path wiring（2026-09-01）—— 状态转换进 CATS-Net 同一张图
+//   失败静默不破主流程
+import { getIntegration as getIntegrationSingleton } from '../cats_net/integration/init.js'
 
 export class StateMachine extends HSM {
   /**
@@ -127,6 +130,20 @@ export class StateMachine extends HSM {
           console.log(`[state] 概念激活失败(降级): ${result.to} 原因=${err.message}`)
         }
       }
+    }
+
+    // C-3.9 L5 hot path wiring（2026-09-01）—— 状态转换进 CATS-Net 同一张图
+    //   走 l5.recordTransition（已 sanitizeAttrs 剥离 emotion 字段）
+    //   fsmId='state_machine'（StateMachine 是 GINA 主状态机）
+    //   weight=0.8（默认转换概率，FSM 内部 transition 不携带概率，统一给 0.8）
+    //   失败静默：integration 挂掉不影响状态机主流程
+    try {
+      const integ = getIntegrationSingleton()
+      if (integ && result.from && result.to && result.event) {
+        integ.l5.recordTransition('state_machine', result.from, result.to, result.event, { weight: 0.8 })
+      }
+    } catch {
+      // 静默：L5 节点化失败不影响主流程
     }
   }
 }

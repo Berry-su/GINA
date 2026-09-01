@@ -19,6 +19,9 @@ import {
   searchMemories,
   getMemoriesByEntity,
 } from '../capabilities/db.js'
+// C-3.9 L2 hot path wiring（2026-09-01）—— 写入观测/知识到 CATS-Net 同一张图
+//   失败静默不破主流程（write path 关键）
+import { getIntegration as getIntegrationSingleton } from '../cats_net/integration/init.js'
 
 const KNOWLEDGE_SOURCES = new Set([
   'market_case', 'investment_book', 'investment_technique', 'investor_case', 'seed_knowledge',
@@ -64,6 +67,7 @@ export class MemoryHub {
     const source = typeof obs.source === 'string' ? obs.source : 'observation'
     const eventType = KNOWLEDGE_SOURCES.has(source) ? 'knowledge' : 'observation'
     const salience = 1 + Math.round((Number.isFinite(obs.importance) ? obs.importance : 1) * 4)
+    const memId = typeof obs.id === 'string' && obs.id ? obs.id : `mh_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 
     try {
       insertMemory({
@@ -71,14 +75,35 @@ export class MemoryHub {
         content,
         detail: '',
         title: content.slice(0, 60),
-        mem_id: typeof obs.id === 'string' && obs.id ? obs.id : undefined,
+        mem_id: memId,
         concepts,
         tags: [source, ...tags],
         salience,
         timestamp: new Date().toISOString(),
       })
       console.log(`[memory-hub] 写入统一记忆: ${eventType} concepts=[${concepts.join(',')}]`)
-      return { id: obs.id ?? null, content }
+
+      // C-3.9 L2 hot path wiring（2026-09-01）—— 写入观测/知识到 CATS-Net 同一张图
+      //   走 l2.recordMemory（已 sanitizeAttrs 剥离 emotion 字段）
+      //   失败静默：integration 挂掉不影响 memory-hub 主写入流程
+      try {
+        const integ = getIntegrationSingleton()
+        if (integ) {
+          integ.l2.recordMemory({
+            memoryId: memId,
+            content: content.slice(0, 500),
+            type: eventType,
+            importance: Number.isFinite(obs.importance) ? Math.max(0, Math.min(1, obs.importance)) : 0.5,
+            concepts,
+            source,
+            level: eventType === 'knowledge' ? 'semantic' : 'episodic',
+          })
+        }
+      } catch {
+        // 静默：L2 节点化失败不影响主流程
+      }
+
+      return { id: memId, content }
     } catch (err) {
       console.log(`[memory-hub] 写入降级(数据库不可用): ${err.message}`)
       return null

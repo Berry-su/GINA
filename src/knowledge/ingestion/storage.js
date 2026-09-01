@@ -7,6 +7,12 @@
 //   - 失败不静默：抛 IngestionError 带 step='storing'
 //
 // 关联 ADR-004 §3.2.3
+//
+// C-3.9 L4 hot path wiring（2026-09-01）—— 每条 ingested fact 进 CATS-Net 同一张图
+//   domain=general（ingestion 是通用知识；未来分域用 topic 推断）
+//   slug=ing_<timestamp>_<idx>（每条 fact 唯一）
+//   失败静默：integration 挂掉不影响 ingestion 主存储流程
+import { getIntegration as getIntegrationSingleton } from '../../cats_net/integration/init.js'
 
 /**
  * 存储 nodes + facts 到 CATS-Net + memories
@@ -70,6 +76,24 @@ export async function storeIngestion({ nodes, facts, path, topic, source, catsNe
           embedding_dim: embDim,
         })
         memCount++
+
+        // C-3.9 L4 hot path wiring（2026-09-01）—— ingested fact 进 CATS-Net 同一张图
+        //   domain=general（ingestion 是通用知识；topic 推断留给未来）
+        //   slug=ing_<unix>_<idx>（每条 fact 唯一 id）
+        //   失败静默：integration 挂掉不影响 insertMemory 主流程
+        try {
+          const integ = getIntegrationSingleton()
+          if (integ) {
+            integ.l4.ingestKnowledge({
+              domain: 'general',
+              slug: `ing_${Date.now()}_${memCount}`,
+              name: (topic || 'ingested').slice(0, 100),
+              content: (f.text || '').slice(0, 1000),
+            })
+          }
+        } catch {
+          // 静默：L4 节点化失败不影响 ingestion 存储主流程
+        }
       } catch (err) {
         console.warn('[ingestion/storage] insertMemory failed:', err?.message || err)
       }
