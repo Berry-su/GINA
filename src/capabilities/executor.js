@@ -37,6 +37,8 @@ import { fetchCalendarEvents, fetchRecentEmails, searchContacts } from '../data-
 import { execManageRule } from './tools/rules.js'
 import { enqueueOrder, listOrders, completeOrder, nextPendingOrder, getOrderQueueStats } from '../order-queue.js'
 import { execQueryCalendar, execQueryEmail, execQueryTasks } from './tools/connectors.js'
+import { execQueryCron, execRunCron } from './tools/agentic.js'
+import { execQueryNotes, execWriteNote } from './tools/notes.js'
 import { execBrowserSetDisplayMode } from './tools/browser-display.js'
 import { execBrowserClearData } from './tools/browser-data.js'
 import { execSystemBrowserOpen } from './tools/system-browser.js'
@@ -376,6 +378,14 @@ async function executeToolUnchecked(name, args, context = {}) {
         return await execQueryEmail(args, context)
       case 'query_tasks':
         return await execQueryTasks(args, context)
+      case 'query_cron':
+        return await execQueryCron(args, context)
+      case 'run_cron':
+        return await execRunCron(args, context)
+      case 'query_notes':
+        return await execQueryNotes(args, context)
+      case 'write_note':
+        return await execWriteNote(args, context)
       case 'manage_api_capability':
         return execManageApiCapability(args)
       case 'find_tool':

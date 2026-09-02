@@ -14,6 +14,8 @@ import { apiCapabilitySchemas } from './schemas/api-capabilities.js'
 import { personalSchemas } from './schemas/personal.js'
 import { ordersSchemas } from './schemas/orders.js'
 import { connectorsSchemas } from './schemas/connectors.js'
+import { agenticSchemas } from './schemas/agentic.js'
+import { notesSchemas } from './schemas/notes.js'
 import { BUILTIN_PLAYWRIGHT_ALLOWED_TOOLS } from '../mcp/playwright-server.js'
 
 export const BUILTIN_SCHEMA_GROUPS = Object.freeze([
@@ -33,6 +35,8 @@ export const BUILTIN_SCHEMA_GROUPS = Object.freeze([
   ['personal', personalSchemas],
   ['orders', ordersSchemas],
   ['connectors', connectorsSchemas],
+  ['agentic', agenticSchemas],
+  ['notes', notesSchemas],
 ])
 
 // Reserve retired aliases and built-in Playwright remote names so installed

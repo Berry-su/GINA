@@ -36,6 +36,8 @@ import { handleTranslateRoutes } from './api/routes/translate.js'
 import { handleCalendarRoutes } from './api/routes/calendar.js'
 import { handleEmailRoutes } from './api/routes/email.js'
 import { handleTasksRoutes } from './api/routes/tasks.js'
+import { handleCronRoutes } from './api/routes/cron.js'
+import { handleNotesRoutes } from './api/routes/notes.js'
 import {
   attachWebSocketIdleTimeout,
   authorizeWebSocketUpgrade,
@@ -184,6 +186,8 @@ async function dispatchHttpRoutes(req, res, url, context) {
   if (await handleCalendarRoutes(req, res, url)) return true
   if (await handleEmailRoutes(req, res, url)) return true
   if (await handleTasksRoutes(req, res, url)) return true
+  if (await handleCronRoutes(req, res, url)) return true
+  if (await handleNotesRoutes(req, res, url)) return true
   return false
 }
 

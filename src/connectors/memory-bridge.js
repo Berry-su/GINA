@@ -160,6 +160,84 @@ export async function ingestTasks(tasks = [], { maxItems = 25 } = {}) {
   return { ok: true, ingested, total: tasks.length }
 }
 
+// ── Concept 化："X 是关于 Y 的"（Phase 3 · notes + cron）────────────
+function buildNoteConceptText(note) {
+  if (!note || !note.title) return null
+  const tagStr = Array.isArray(note.tags) && note.tags.length > 0 ? note.tags.join('/') : '无标签'
+  const provider = note.provider || 'note'
+  return `《${note.title}》是关于 ${tagStr} 的笔记（${provider}）`
+}
+
+function buildCronConceptText(run) {
+  if (!run || !run.id) return null
+  const time = run.runAt ? new Date(run.runAt).toLocaleString('zh-CN', { hour12: false }) : '未注明时间'
+  const summary = run.summary || (run.ok ? '成功' : '失败')
+  return `${run.id} cron 在 ${time} 跑过，${summary}`
+}
+
+// ── 公开 API：ingest 笔记（Phase 3） ────────────────────────────────────
+export async function ingestNotes(notes = [], { maxItems = 25 } = {}) {
+  if (!Array.isArray(notes) || notes.length === 0) return { ok: true, ingested: 0 }
+  const top = notes.slice(0, maxItems)
+  let ingested = 0
+  for (const n of top) {
+    const concept = buildNoteConceptText(n)
+    if (!concept) continue
+    const keywords = safeExtractKeywords(`${n.title || ''} ${Array.isArray(n.tags) ? n.tags.join(' ') : ''}`)
+    const memId = `note-${n.provider || 'x'}-${n.id}`
+    const r = await safeUpsertMemory({
+      memId,
+      content: concept,
+      type: 'episodic',
+      source: `connector:notes:${n.provider || 'unknown'}`,
+      tags: ['note', n.provider, ...(n.tags || []), ...keywords].filter(Boolean),
+      detail: {
+        kind: 'note',
+        provider: n.provider,
+        pageId: n.id,
+        parentId: n.parentId,
+        title: n.title,
+        url: n.url,
+        tags: n.tags,
+        contentLength: typeof n.content === 'string' ? n.content.length : 0,
+      },
+    })
+    if (r.ok) ingested++
+  }
+  return { ok: true, ingested, total: notes.length }
+}
+
+// ── 公开 API：ingest cron 跑次（Phase 3） ──────────────────────────────
+export async function ingestCronRuns(runs = [], { maxItems = 50 } = {}) {
+  if (!Array.isArray(runs) || runs.length === 0) return { ok: true, ingested: 0 }
+  const top = runs.slice(0, maxItems)
+  let ingested = 0
+  for (const run of top) {
+    const concept = buildCronConceptText(run)
+    if (!concept) continue
+    const memId = `cron-${run.id}-${(run.runAt || new Date().toISOString()).replace(/[^0-9]/g, '').slice(0, 14)}`
+    const r = await safeUpsertMemory({
+      memId,
+      content: concept,
+      type: 'episodic',
+      source: `agentic:cron:${run.id}`,
+      tags: ['cron', run.id, run.category || 'unknown', run.ok ? 'success' : 'failure'],
+      detail: {
+        kind: 'cron_run',
+        cronId: run.id,
+        runAt: run.runAt,
+        ok: Boolean(run.ok),
+        summary: run.summary,
+        category: run.category,
+        durationMs: run.durationMs,
+        triggeredBy: run.triggeredBy || 'schedule',
+      },
+    })
+    if (r.ok) ingested++
+  }
+  return { ok: true, ingested, total: runs.length }
+}
+
 // ── Memory-bridge 状态（健康检查用） ─────────────────────────────────────
 export function getMemoryBridgeStatus() {
   return {
@@ -170,11 +248,14 @@ export function getMemoryBridgeStatus() {
       autoDecay: true,
       maxItemsPerIngest: 25,
     },
+    sources: ['calendar', 'email', 'tasks', 'notes', 'cron'],
   }
 }
 
 export const __test = {
   buildConceptText,
+  buildNoteConceptText,
+  buildCronConceptText,
   safeExtractKeywords,
   safeUpsertMemory,
 }
