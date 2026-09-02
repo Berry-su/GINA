@@ -16,6 +16,7 @@ import { ordersSchemas } from './schemas/orders.js'
 import { connectorsSchemas } from './schemas/connectors.js'
 import { agenticSchemas } from './schemas/agentic.js'
 import { notesSchemas } from './schemas/notes.js'
+import { iotSchemas } from './schemas/iot.js'
 import { BUILTIN_PLAYWRIGHT_ALLOWED_TOOLS } from '../mcp/playwright-server.js'
 
 export const BUILTIN_SCHEMA_GROUPS = Object.freeze([
@@ -37,6 +38,7 @@ export const BUILTIN_SCHEMA_GROUPS = Object.freeze([
   ['connectors', connectorsSchemas],
   ['agentic', agenticSchemas],
   ['notes', notesSchemas],
+  ['iot', iotSchemas],
 ])
 
 // Reserve retired aliases and built-in Playwright remote names so installed

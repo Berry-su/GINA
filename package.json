@@ -21,7 +21,7 @@
     ]
   },
   "scripts": {
-    "test": "node tests/cats-net-selftest.js && node src/analysts/selftest.js && node scripts/verify-startup.mjs && node src/self/test-model.js && node src/learning/test-direction.js && node src/test-c4-integration.js && node tests/emotion-isolation.test.js && node src/emotion/test-joy.js && node src/experience/test-experience.js && node src/knowledge/ingestion/test-ingestion-pipeline.js && node --test src/brain/integration/test-smoke.js && node --test tests/test-c3-integration.js && node --test tests/test-c3-9-hot-path-wiring.js && node --test tests/test-direction-weighting.js && node --test tests/test-r11-reflection.js && node --test tests/test-translate.js && node --test tests/test-vlm-ocr.js && node --test tests/test-connectors.js && node --test tests/test-cron-orchestrator.js && node --test tests/test-notes-sync.js",
+    "test": "node tests/cats-net-selftest.js && node src/analysts/selftest.js && node scripts/verify-startup.mjs && node src/self/test-model.js && node src/learning/test-direction.js && node src/test-c4-integration.js && node tests/emotion-isolation.test.js && node src/emotion/test-joy.js && node src/experience/test-experience.js && node src/knowledge/ingestion/test-ingestion-pipeline.js && node --test src/brain/integration/test-smoke.js && node --test tests/test-c3-integration.js && node --test tests/test-c3-9-hot-path-wiring.js && node --test tests/test-direction-weighting.js && node --test tests/test-r11-reflection.js && node --test tests/test-translate.js && node --test tests/test-vlm-ocr.js && node --test tests/test-connectors.js && node --test tests/test-cron-orchestrator.js && node --test tests/test-notes-sync.js && node --test tests/test-iot.js && node --test tests/test-iot-scenarios.js",
     "test:self-model": "node src/self/test-model.js",
     "test:direction": "node src/learning/test-direction.js",
     "test:joy": "node src/emotion/test-joy.js",
@@ -238,7 +238,10 @@
       "category": "public.app-category.productivity",
       "extendInfo": {
         "NSMicrophoneUsageDescription": "Gina uses the microphone for voice input when you enable voice features.",
-        "NSSpeechRecognitionUsageDescription": "Gina may use speech recognition for voice input features."
+        "NSSpeechRecognitionUsageDescription": "Gina may use speech recognition for voice input features.",
+        "NSHomeKitUsageDescription": "Gina uses HomeKit to control your smart home accessories (lights, locks, thermostats) when you explicitly request a control or enable an automation scenario.",
+        "NSLocationWhenInUseUsageDescription": "Gina uses your location to detect when you arrive home and trigger home automation scenarios (e.g. turn on lights, unlock the door) when you enable the 'come home' scenario.",
+        "NSLocalNetworkUsageDescription": "Gina uses your local network to discover and control smart home devices via HomeKit, MQTT, and other local protocols when you explicitly request a control or enable an automation scenario."
       },
       "artifactName": "${productName}-${version}-mac-${arch}.${ext}"
     },

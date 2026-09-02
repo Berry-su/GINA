@@ -238,6 +238,92 @@ export async function ingestCronRuns(runs = [], { maxItems = 50 } = {}) {
   return { ok: true, ingested, total: runs.length }
 }
 
+// ── Concept 化："X 是关于 Y 的"（Phase 4 · IoT + 场景）─────────────────
+function buildIoTDeviceConceptText(device) {
+  if (!device) return null
+  const stateStr = []
+  if (typeof device.state?.on === 'boolean') stateStr.push(device.state.on ? '开' : '关')
+  if (typeof device.state?.brightness === 'number') stateStr.push(`亮度${device.state.brightness}%`)
+  if (typeof device.state?.temperature === 'number') stateStr.push(`${device.state.temperature}°`)
+  if (typeof device.state?.locked === 'boolean') stateStr.push(device.state.locked ? '已锁' : '未锁')
+  const stateDesc = stateStr.length > 0 ? `（${stateStr.join('，')}）` : ''
+  return `${device.name}（${device.type}，${device.room}）${stateDesc} 是 ${device.provider} 的 IoT 设备`
+}
+
+function buildScenarioRunConceptText(run) {
+  if (!run) return null
+  const time = run.runAt ? new Date(run.runAt).toLocaleString('zh-CN', { hour12: false }) : '未注明时间'
+  const flag = run.dryRun ? '[干跑]' : ''
+  return `IoT 场景 ${run.scenarioId || ''} 在 ${time} 跑过${flag}：${run.summary || (run.ok ? '成功' : '失败')}`
+}
+
+// ── 公开 API：ingest IoT 设备（Phase 4）──────────────────────────────────
+export async function ingestIoTDevices(devices = [], { maxItems = 25 } = {}) {
+  if (!Array.isArray(devices) || devices.length === 0) return { ok: true, ingested: 0 }
+  const top = devices.slice(0, maxItems)
+  let ingested = 0
+  for (const d of top) {
+    const concept = buildIoTDeviceConceptText(d)
+    if (!concept) continue
+    const keywords = safeExtractKeywords(`${d.name || ''} ${d.type || ''} ${d.room || ''}`)
+    const memId = `iot-${d.provider || 'x'}-${d.id}`
+    const r = await safeUpsertMemory({
+      memId,
+      content: concept,
+      type: 'episodic',
+      source: `connector:iot:${d.provider || 'unknown'}`,
+      tags: ['iot', d.provider, d.type, d.room, ...keywords].filter(Boolean),
+      detail: {
+        kind: 'iot_device',
+        provider: d.provider,
+        deviceId: d.id,
+        name: d.name,
+        type: d.type,
+        room: d.room,
+        state: d.state,
+        controllable: d.controllable,
+        lastUpdated: d.lastUpdated,
+      },
+    })
+    if (r.ok) ingested++
+  }
+  return { ok: true, ingested, total: devices.length }
+}
+
+// ── 公开 API：ingest IoT 场景跑次（Phase 4）──────────────────────────────
+export async function ingestScenarioRuns(runs = [], { maxItems = 50 } = {}) {
+  if (!Array.isArray(runs) || runs.length === 0) return { ok: true, ingested: 0 }
+  const top = runs.slice(0, maxItems)
+  let ingested = 0
+  for (const run of top) {
+    const concept = buildScenarioRunConceptText(run)
+    if (!concept) continue
+    const memId = `iot-scenario-${run.scenarioId || 'x'}-${(run.runAt || new Date().toISOString()).replace(/[^0-9]/g, '').slice(0, 14)}`
+    const r = await safeUpsertMemory({
+      memId,
+      content: concept,
+      type: 'episodic',
+      source: `agentic:iot-scenario:${run.scenarioId || 'unknown'}`,
+      tags: ['iot', 'scenario', run.scenarioId, run.dryRun ? 'dry-run' : 'live', run.ok ? 'success' : 'failure', run.triggeredBy || 'unknown'].filter(Boolean),
+      detail: {
+        kind: 'iot_scenario_run',
+        scenarioId: run.scenarioId,
+        runId: run.runId,
+        runAt: run.runAt,
+        ok: Boolean(run.ok),
+        summary: run.summary,
+        actionsCount: run.actionsCount,
+        successCount: run.successCount,
+        dryRun: Boolean(run.dryRun),
+        approved: Boolean(run.approved),
+        triggeredBy: run.triggeredBy,
+      },
+    })
+    if (r.ok) ingested++
+  }
+  return { ok: true, ingested, total: runs.length }
+}
+
 // ── Memory-bridge 状态（健康检查用） ─────────────────────────────────────
 export function getMemoryBridgeStatus() {
   return {
@@ -248,7 +334,7 @@ export function getMemoryBridgeStatus() {
       autoDecay: true,
       maxItemsPerIngest: 25,
     },
-    sources: ['calendar', 'email', 'tasks', 'notes', 'cron'],
+    sources: ['calendar', 'email', 'tasks', 'notes', 'cron', 'iot', 'iot_scenario'],
   }
 }
 
@@ -256,6 +342,8 @@ export const __test = {
   buildConceptText,
   buildNoteConceptText,
   buildCronConceptText,
+  buildIoTDeviceConceptText,
+  buildScenarioRunConceptText,
   safeExtractKeywords,
   safeUpsertMemory,
 }

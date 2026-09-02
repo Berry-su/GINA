@@ -39,6 +39,7 @@ import { enqueueOrder, listOrders, completeOrder, nextPendingOrder, getOrderQueu
 import { execQueryCalendar, execQueryEmail, execQueryTasks } from './tools/connectors.js'
 import { execQueryCron, execRunCron } from './tools/agentic.js'
 import { execQueryNotes, execWriteNote } from './tools/notes.js'
+import { execQueryIot, execControlIot } from './tools/iot.js'
 import { execBrowserSetDisplayMode } from './tools/browser-display.js'
 import { execBrowserClearData } from './tools/browser-data.js'
 import { execSystemBrowserOpen } from './tools/system-browser.js'
@@ -386,6 +387,10 @@ async function executeToolUnchecked(name, args, context = {}) {
         return await execQueryNotes(args, context)
       case 'write_note':
         return await execWriteNote(args, context)
+      case 'query_iot':
+        return await execQueryIot(args, context)
+      case 'control_iot':
+        return await execControlIot(args, context)
       case 'manage_api_capability':
         return execManageApiCapability(args)
       case 'find_tool':

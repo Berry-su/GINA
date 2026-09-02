@@ -38,6 +38,7 @@ import { handleEmailRoutes } from './api/routes/email.js'
 import { handleTasksRoutes } from './api/routes/tasks.js'
 import { handleCronRoutes } from './api/routes/cron.js'
 import { handleNotesRoutes } from './api/routes/notes.js'
+import { handleIotRoutes } from './api/routes/iot.js'
 import {
   attachWebSocketIdleTimeout,
   authorizeWebSocketUpgrade,
@@ -188,6 +189,7 @@ async function dispatchHttpRoutes(req, res, url, context) {
   if (await handleTasksRoutes(req, res, url)) return true
   if (await handleCronRoutes(req, res, url)) return true
   if (await handleNotesRoutes(req, res, url)) return true
+  if (await handleIotRoutes(req, res, url)) return true
   return false
 }
 
