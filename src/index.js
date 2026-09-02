@@ -1,5 +1,6 @@
 import './network-proxy.js'
 import path from 'path'
+import { initMonitoring, getMonitoring as _getMonitoring, shutdownMonitoring } from './monitoring/index.js'
 import { config, getMinimaxKey as _getMinimaxKey, getSecurity } from './config.js'
 import { callLLM } from './llm.js'
 import { buildSystemPrompt, buildContextBlock, combinePromptForPreview } from './prompt.js'
@@ -1864,7 +1865,11 @@ async function main() {
     console.log(`[system] 收到 ${signal}，正在优雅退出…`)
     Promise.resolve(shutdownMcpClients())
       .catch(() => {})
-      .finally(() => process.exit(0))
+      .finally(() => {
+        // 关监控
+        try { shutdownMonitoring() } catch { /* ignore */ }
+        process.exit(0)
+      })
     // 兜底：3 秒内没退干净就强制退出
     setTimeout(() => process.exit(1), 3000).unref?.()
   }
@@ -1872,6 +1877,22 @@ async function main() {
   process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
 
   console.log('Gina starting...')
+
+  // 初始化本地监控（ADR-017）：metrics + logger + alerter + dashboard
+  //   - 数据全本地（data/metrics.db + data/logs/*.jsonl），不外发
+  //   - dashboard 绑 127.0.0.1:3000（仅本机访问）
+  //   - 失败不影响主流程（包在 try/catch）
+  try {
+    const pkgVersion = (() => { try { return process.env.GINA_VERSION || null } catch { return null } })()
+    initMonitoring({
+      dashboard: { enabled: process.env.GINA_DASHBOARD_DISABLED === '1' ? false : true, port: 3000, host: '127.0.0.1' },
+      logger: { level: process.env.GINA_LOG_LEVEL || 'info' },
+      startup: { version: pkgVersion, duration_ms: 0 },
+    })
+    console.log('[system] 本地监控已启动（http://127.0.0.1:3000/metrics）')
+  } catch (err) {
+    console.warn('[monitoring] 初始化失败（不影响主功能）:', err.message)
+  }
 
   // 启动时打印恢复的线索状态，便于"重启不丢线索/承诺"的直观验证。
   {
