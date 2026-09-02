@@ -1,0 +1,95 @@
+# GINA 主仓 · macOS build · tag v* 触发
+# 设计：ADR-016-CICD-Pipeline_2026-09-02.md §3.1 / D2
+# 触发：push tag 形如 v1.2.3
+# 输出：arm64 + x64 dmg，上传 GitHub Actions artifact
+name: Build GINA macOS
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:  # 老板手动触发（未打 tag 也可触发）
+
+concurrency:
+  group: build-mac-${{ github.ref }}
+  cancel-in-progress: false  # build 不取消，避免半成品
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '10.34.5'
+
+jobs:
+  build-mac:
+    name: pnpm build:mac（arm64 + x64 dmg）
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache electron-builder
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/electron
+            ~/Library/Caches/electron-builder
+          key: ${{ runner.os }}-eb-${{ hashFiles('package.json', 'pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-eb-
+
+      # ── Code signing 准备（占位 · 老板按需配）──
+      # 真实签名需在 GitHub Settings → Secrets 配：
+      #   MACOS_CERT_P12（base64 P12 证书）
+      #   MACOS_CERT_PASSWORD（P12 密码）
+      #   KEYCHAIN_PASSWORD（临时 keychain 密码 · runner 临时生成）
+      # 当前阶段：跳过签名，build 出 unsigned dmg（老板本地手签）
+
+      - name: pnpm build:mac
+        run: pnpm build:mac
+        env:
+          # 不硬编码真实 ID，placeholder
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'  # 暂不签名
+
+      - name: List dist artifacts
+        run: ls -lh dist/
+
+      - name: Upload macOS dmg artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: gina-mac-dmg
+          path: |
+            dist/*.dmg
+            dist/*.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  summary:
+    name: build summary
+    runs-on: ubuntu-latest
+    needs: build-mac
+    if: always()
+    steps:
+      - name: Report status
+        run: |
+          if [ "${{ needs.build-mac.result }}" == "success" ]; then
+            echo "✅ macOS build OK"
+          else
+            echo "❌ macOS build FAILED: ${{ needs.build-mac.result }}"
+            exit 1
+          fi

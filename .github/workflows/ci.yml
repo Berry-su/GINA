@@ -1,0 +1,90 @@
+# GINA 主仓 CI · push / PR / schedule 触发
+# 设计：ADR-016-CICD-Pipeline_2026-09-02.md §3.1 / §4
+# 必跑：pnpm test（full suite 24+ 套件，含 emotion-isolation 9/9） + emotion-isolation 显式 step（双保险）
+name: GINA CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # 每日 02:00 CST 跑全量（北京时间，对应 UTC 18:00）
+  schedule:
+    - cron: '0 18 * * *'
+  workflow_dispatch:  # 老板手动触发
+
+# 取消同一 PR 上一次未完成的 ci run
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '10.34.5'
+
+jobs:
+  test:
+    name: pnpm test（24+ 套件 · emotion-isolation 9/9 严守）
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # 全 clone（emotion-isolation 9/9 需要看整个 src/ tree）
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: emotion-isolation 9/9 严守（C-4.3 核心红线 · 显式 step）
+        run: pnpm test:joy-isolation
+
+      - name: pnpm test（全套件：cats-net + analysts + c4 + emotion + ingestion + 6 阶段 + ...）
+        run: pnpm test
+
+      - name: Verify core link order（@berrysu/gina-core 在 devDeps 之前）
+        run: bash scripts/check-core-comes-first.sh
+
+  smoke-schedule-only:
+    # 每日 02:00 CST 定时跑（schedule 触发时），PR 触发时跳过
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    name: smoke tools（仅 schedule）
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - name: smoke tools（沙箱逃逸检测 · immune P1 9-01 修复项）
+        run: node scripts/smoke-tools.mjs
+
+  lint-summary:
+    # 占位：未来加 eslint / prettier check（6 阶段没要求，先不引）
+    if: false
+    name: lint summary（reserved · 未来加）
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - run: echo "lint step reserved for future (eslint / prettier)"

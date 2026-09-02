@@ -1,0 +1,93 @@
+# GINA 主仓 · Windows build · tag v* 触发
+# 设计：ADR-016-CICD-Pipeline_2026-09-02.md §3.1 / D2
+# 触发：push tag 形如 v1.2.3
+# 输出：x64 nsis installer，上传 GitHub Actions artifact
+name: Build GINA Windows
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+concurrency:
+  group: build-win-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '10.34.5'
+
+jobs:
+  build-win:
+    name: pnpm build:win（x64 nsis）
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache electron-builder
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~\AppData\Local\electron\Cache
+            ~\AppData\Local\electron-builder\Cache
+          key: ${{ runner.os }}-eb-${{ hashFiles('package.json', 'pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-eb-
+
+      # ── Code signing 准备（占位 · 老板按需配）──
+      # 真实签名需在 GitHub Settings → Secrets 配：
+      #   WINDOWS_CERT_PFX（base64 PFX 证书）
+      #   WINDOWS_CERT_PASSWORD（PFX 密码）
+      # 当前阶段：跳过签名，build 出 unsigned nsis（老板本地手签）
+
+      - name: pnpm build:win
+        run: pnpm build:win
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'  # 暂不签名
+
+      - name: List dist artifacts
+        shell: pwsh
+        run: Get-ChildItem dist/ -Recurse | Select-Object FullName, Length
+
+      - name: Upload Windows nsis artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: gina-win-nsis
+          path: |
+            dist/*.exe
+          if-no-files-found: error
+          retention-days: 14
+
+  summary:
+    name: build summary
+    runs-on: ubuntu-latest
+    needs: build-win
+    if: always()
+    steps:
+      - name: Report status
+        run: |
+          if [ "${{ needs.build-win.result }}" == "success" ]; then
+            echo "✅ Windows build OK"
+          else
+            echo "❌ Windows build FAILED: ${{ needs.build-win.result }}"
+            exit 1
+          fi
