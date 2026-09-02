@@ -40,6 +40,7 @@ import { execQueryCalendar, execQueryEmail, execQueryTasks } from './tools/conne
 import { execQueryCron, execRunCron } from './tools/agentic.js'
 import { execQueryNotes, execWriteNote } from './tools/notes.js'
 import { execQueryIot, execControlIot } from './tools/iot.js'
+import { execQueryVideo, execSummarizeVideo, execExtractVideoFrames, execTranscribeVideo } from './tools/video.js'
 import { execBrowserSetDisplayMode } from './tools/browser-display.js'
 import { execBrowserClearData } from './tools/browser-data.js'
 import { execSystemBrowserOpen } from './tools/system-browser.js'
@@ -391,6 +392,14 @@ async function executeToolUnchecked(name, args, context = {}) {
         return await execQueryIot(args, context)
       case 'control_iot':
         return await execControlIot(args, context)
+      case 'query_video':
+        return await execQueryVideo(args, context)
+      case 'summarize_video':
+        return await execSummarizeVideo(args, context)
+      case 'extract_video_frames':
+        return await execExtractVideoFrames(args, context)
+      case 'transcribe_video':
+        return await execTranscribeVideo(args, context)
       case 'manage_api_capability':
         return execManageApiCapability(args)
       case 'find_tool':

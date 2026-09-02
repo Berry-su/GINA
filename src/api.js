@@ -39,6 +39,7 @@ import { handleTasksRoutes } from './api/routes/tasks.js'
 import { handleCronRoutes } from './api/routes/cron.js'
 import { handleNotesRoutes } from './api/routes/notes.js'
 import { handleIotRoutes } from './api/routes/iot.js'
+import { handleVideoRoutes } from './api/routes/video.js'
 import {
   attachWebSocketIdleTimeout,
   authorizeWebSocketUpgrade,
@@ -190,6 +191,7 @@ async function dispatchHttpRoutes(req, res, url, context) {
   if (await handleCronRoutes(req, res, url)) return true
   if (await handleNotesRoutes(req, res, url)) return true
   if (await handleIotRoutes(req, res, url)) return true
+  if (await handleVideoRoutes(req, res, url)) return true
   return false
 }
 
