@@ -132,6 +132,7 @@ export function startMonitoring(options = {}) {
   // 立即跑一次
   poll()
   state.timer = setInterval(poll, state.pollIntervalMs)
+  if (typeof state.timer.unref === 'function') state.timer.unref()
   return { state, error: null }
 }
 

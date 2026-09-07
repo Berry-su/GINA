@@ -265,6 +265,32 @@ test('isolation: geo-tracker 0 import emotion-state (类比 ADR-002 meta-info �
   }
 })
 
+test('lifecycle: setInterval 必须 unref() (Node 进程退出)', () => {
+  // 读源码确认三个 setInterval 都 unref 了
+  const base = '/Users/ahs/Documents/BaiLongma-refactor-codebase/src/perception/'
+  const checks = [
+    { file: base + 'geo-tracker/ip-locator.js', grep: /setInterval\([^)]+\)\s*$/m },
+    { file: base + 'typhoon-tracker/typhoon-tracker.js', grep: /setInterval\([^)]+\)\s*$/m },
+    { file: base + 'weather-monitor/weather-monitor.js', grep: /setInterval\([^)]+\)\s*$/m },
+  ]
+  for (const { file } of checks) {
+    const src = fs.readFileSync(file, 'utf8')
+    // 找 setInterval 行（不在注释里、不在测试里）
+    const lines = src.split('\n').filter(l => !l.trim().startsWith('//') && /setInterval\(/.test(l))
+    assert.ok(lines.length >= 1, `${file} should have at least one setInterval`)
+    for (const line of lines) {
+      // 行内必须链 .unref()  或下一行 .unref()
+      const idx = src.indexOf(line)
+      const window = src.slice(idx, idx + line.length + 200)
+      assert.match(
+        window,
+        /\.unref\s*\(\s*\)/,
+        `${file}: setInterval must be unrefed to not block Node exit:\n${line}`
+      )
+    }
+  }
+})
+
 // ─── cleanup ────────────────────────────────────────────────
 
 after(() => {
